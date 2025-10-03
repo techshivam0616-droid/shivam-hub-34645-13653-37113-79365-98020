@@ -22,8 +22,8 @@ export function ContentCard({ item, type, viewMode }: ContentCardProps) {
         whileHover={{ y: -4 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className={`group relative overflow-hidden glass-effect border-2 hover:border-primary/40 transition-all duration-300 shadow-card hover:shadow-glow ${viewMode === 'list' ? 'flex flex-row' : ''}`}>
-          <div className="absolute inset-0 bg-gradient-secondary opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+        <Card className={`group relative overflow-hidden border-2 hover:border-primary transition-all ${viewMode === 'list' ? 'flex flex-row' : ''}`}>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           
           {item.thumbnail && (
             <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'w-full'} overflow-hidden`}>
@@ -61,7 +61,7 @@ export function ContentCard({ item, type, viewMode }: ContentCardProps) {
                 )}
                 <Button 
                   onClick={() => setShowDownload(true)} 
-                  className="w-full bg-gradient-primary hover:opacity-90 transition-opacity text-white font-semibold shadow-glow mt-2"
+                  className="w-full relative z-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold mt-2"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download

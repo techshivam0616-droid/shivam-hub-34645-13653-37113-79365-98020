@@ -66,9 +66,9 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg glass-effect border-2 border-primary/30 neon-border">
+      <DialogContent className="sm:max-w-lg border-2 border-primary">
         <DialogHeader>
-          <DialogTitle className="text-2xl gradient-text">🔑 Generate Download Key</DialogTitle>
+          <DialogTitle className="text-2xl text-primary">🔑 Generate Download Key</DialogTitle>
           <DialogDescription className="text-base text-muted-foreground">
             Follow these simple steps to unlock your download
           </DialogDescription>
@@ -87,7 +87,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
                 <Button 
                   onClick={generateShortLink} 
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-primary via-accent to-secondary hover:shadow-neon transition-all text-white font-bold py-6"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6"
                 >
                   {loading ? (
                     <>
@@ -131,7 +131,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
                 </p>
                 <Button 
                   onClick={handleComplete}
-                  className="w-full bg-gradient-to-r from-primary via-accent to-secondary hover:shadow-neon transition-all text-white font-bold py-6"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6"
                 >
                   ✅ I've Visited the Link - Activate Key
                 </Button>

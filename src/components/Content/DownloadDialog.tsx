@@ -109,9 +109,9 @@ export function DownloadDialog({ open, onOpenChange, item, type }: DownloadDialo
     <>
       {/* Main Download Dialog */}
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md glass-effect border-2 border-primary/30 neon-border">
+        <DialogContent className="sm:max-w-md border-2 border-primary">
           <DialogHeader>
-            <DialogTitle className="text-2xl gradient-text">{item?.title || 'Download'}</DialogTitle>
+            <DialogTitle className="text-2xl text-primary">{item?.title || 'Download'}</DialogTitle>
             <DialogDescription className="text-muted-foreground">{item?.description || ''}</DialogDescription>
           </DialogHeader>
           
@@ -139,7 +139,7 @@ export function DownloadDialog({ open, onOpenChange, item, type }: DownloadDialo
           <Button 
             onClick={handleDownloadClick} 
             disabled={downloading} 
-            className="w-full bg-gradient-to-r from-primary via-accent to-secondary hover:shadow-neon transition-all text-white font-bold py-6"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6"
           >
             <Download className="h-5 w-5 mr-2" />
             {downloading ? 'Downloading...' : 'Download Now'}
