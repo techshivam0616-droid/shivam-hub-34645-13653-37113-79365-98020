@@ -14,6 +14,7 @@ import RequestMod from "./pages/RequestMod";
 import Contact from "./pages/Contact";
 import DownloadCallback from "./pages/DownloadCallback";
 import NotFound from "./pages/NotFound";
+import LiveChat from "./pages/LiveChat";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/request-mod" element={<RequestMod />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/download-callback" element={<DownloadCallback />} />
+            <Route path="/live-chat" element={<LiveChat />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
