@@ -31,8 +31,9 @@ export function Header() {
                 alt="Tech Shivam Logo" 
                 className="h-10 w-10 rounded-full object-cover"
               />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent flex items-center gap-1">
                 Tech Shivam
+                <span className="text-red-600">✅</span>
               </h1>
             </div>
           </div>

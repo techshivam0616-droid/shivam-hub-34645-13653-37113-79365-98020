@@ -38,6 +38,7 @@ export function ProfileDrawer({ open, onOpenChange }: ProfileDrawerProps) {
             <div className="flex-1">
               <p className="font-semibold flex items-center gap-2">
                 {user.displayName || 'User'}
+                <span className="text-red-600">✅</span>
                 {isAdmin && <Shield className="h-4 w-4 text-primary" />}
               </p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
