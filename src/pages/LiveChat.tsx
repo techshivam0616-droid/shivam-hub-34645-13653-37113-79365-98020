@@ -5,7 +5,6 @@ import { ref, push, onValue, serverTimestamp, onDisconnect, set, off } from 'fir
 import { realtimeDb } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ArrowLeft, Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -45,7 +44,7 @@ export default function LiveChat() {
     
     set(userStatusRef, {
       id: user.uid,
-      name: user.displayName || 'User',
+      name: user.displayName || user.email?.split('@')[0] || 'User',
       lastSeen: serverTimestamp()
     });
 
@@ -86,15 +85,21 @@ export default function LiveChat() {
   const sendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
-    const messagesRef = ref(realtimeDb, 'messages');
-    await push(messagesRef, {
-      text: newMessage,
-      userId: user.uid,
-      userName: user.displayName || 'User',
-      timestamp: Date.now()
-    });
+    try {
+      const messagesRef = ref(realtimeDb, 'messages');
+      await push(messagesRef, {
+        text: newMessage,
+        userId: user.uid,
+        userName: user.displayName || user.email?.split('@')[0] || 'User',
+        timestamp: Date.now()
+      });
 
-    setNewMessage('');
+      setNewMessage('');
+      toast.success('Message sent!');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message. Please check your connection.');
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -128,9 +133,14 @@ export default function LiveChat() {
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-          <div className="space-y-4">
-            {messages.map((message) => {
+        <div className="flex-1 overflow-y-auto pr-4 mb-4" ref={scrollRef}>
+          <div className="space-y-4 py-4">
+            {messages.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                No messages yet. Start the conversation!
+              </div>
+            ) : (
+              messages.map((message) => {
               const isOwn = message.userId === user?.uid;
               const isOnline = onlineUsers[message.userId];
               
@@ -164,11 +174,12 @@ export default function LiveChat() {
                       {new Date(message.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
+                 </div>
+               );
+             })
+            )}
+           </div>
+         </div>
 
         {/* Input */}
         <div className="flex gap-2 mt-4 pt-4 border-t">
