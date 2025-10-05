@@ -39,10 +39,12 @@ export function AdminWebsiteSettings() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await setDoc(doc(db, 'settings', 'website'), formData);
+      await setDoc(doc(db, 'settings', 'website'), formData, { merge: true });
       // Also save to localStorage for quick access
       localStorage.setItem('channelLink', formData.channelLink);
-      toast.success('Website settings updated successfully!');
+      localStorage.setItem('siteName', formData.siteName);
+      localStorage.setItem('logoUrl', formData.logoUrl);
+      toast.success('Website settings updated successfully! Refresh page to see changes.');
     } catch (error) {
       toast.error('Failed to update settings');
       console.error(error);

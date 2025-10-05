@@ -24,10 +24,13 @@ export function MaintenancePopup() {
           const enabled = doc.data()?.enabled || false;
           setMaintenanceMode(enabled);
           
-          // Show popup if maintenance is on and user is not admin
-          // Don't show on admin page
+          // If maintenance is on and user is not admin and not on admin page
           if (enabled && !isAdmin && location.pathname !== '/admin') {
             setOpen(true);
+            // Redirect to home page if not already there
+            if (location.pathname !== '/') {
+              navigate('/');
+            }
           } else {
             setOpen(false);
           }
@@ -39,7 +42,7 @@ export function MaintenancePopup() {
     );
 
     return () => unsubscribe();
-  }, [isAdmin, location.pathname]);
+  }, [isAdmin, location.pathname, navigate]);
 
   const handleAdminAccess = () => {
     setOpen(false);
@@ -51,8 +54,14 @@ export function MaintenancePopup() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md glass-effect border-2 border-primary/50 neon-border">
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      // Prevent closing the dialog unless user is admin or navigating to admin
+      if (!newOpen && !isAdmin) {
+        return;
+      }
+      setOpen(newOpen);
+    }}>
+      <DialogContent className="sm:max-w-md glass-effect border-2 border-primary/50 neon-border" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogHeader>
           <motion.div
             initial={{ scale: 0 }}
