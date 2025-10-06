@@ -22,13 +22,11 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
   const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      // Auto-generate and redirect immediately when dialog opens
-      generateShortLink();
-    } else {
+    if (!open) {
       setStep(1);
       setShortLink('');
       setCompleted(false);
+      setLoading(false);
     }
   }, [open]);
 
@@ -92,18 +90,57 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg border-2 border-primary">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-primary">🔑 Generating Download Key</DialogTitle>
+          <DialogTitle className="text-2xl text-primary flex items-center gap-2">
+            🔑 Download Key Generation
+          </DialogTitle>
           <DialogDescription className="text-base text-muted-foreground">
-            Please wait while we prepare your download...
+            Get instant access to download
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex flex-col items-center justify-center py-8 space-y-4">
-          <Loader2 className="h-16 w-16 animate-spin text-primary" />
-          <p className="text-center text-muted-foreground">
-            Redirecting to verification link...
-          </p>
-        </div>
+        {!loading ? (
+          <div className="flex flex-col items-center justify-center py-6 space-y-6">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-6 space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <p className="text-foreground font-medium mb-2">
+                    एक बार Key Generate करने के बाद:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>✓ 2 घंटे तक Free Download कर सकते हैं</li>
+                    <li>✓ कोई Additional Verification नहीं</li>
+                    <li>✓ Unlimited Downloads (2 hours में)</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded p-3 mt-4">
+                <p className="text-sm text-yellow-600 dark:text-yellow-500">
+                  ⚠️ ध्यान दें: Verification Link पूरा Complete करना जरूरी है, वरना Key Activate नहीं होगी
+                </p>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={generateShortLink}
+              size="lg"
+              className="w-full font-semibold"
+            >
+              🔑 Generate Key
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            <p className="text-center text-muted-foreground">
+              Verification Link पर Redirect हो रहा है...
+            </p>
+            <p className="text-sm text-muted-foreground">
+              कृपया Verification Complete करें
+            </p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
