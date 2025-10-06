@@ -7,11 +7,13 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { AuthDialog } from '@/components/Auth/AuthDialog';
 
 export function MaintenancePopup() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [open, setOpen] = useState(false);
-  const { isAdmin } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -45,9 +47,22 @@ export function MaintenancePopup() {
   }, [isAdmin, location.pathname, navigate]);
 
   const handleAdminAccess = () => {
-    setOpen(false);
-    navigate('/admin');
+    if (user) {
+      setOpen(false);
+      navigate('/admin');
+    } else {
+      setShowAuth(true);
+    }
   };
+
+  // Auto-navigate to admin after successful login
+  useEffect(() => {
+    if (user && showAuth) {
+      setShowAuth(false);
+      setOpen(false);
+      navigate('/admin');
+    }
+  }, [user, showAuth, navigate]);
 
   if (!maintenanceMode || isAdmin) {
     return null;
@@ -115,6 +130,11 @@ export function MaintenancePopup() {
           </DialogDescription>
         </DialogHeader>
       </DialogContent>
+
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={setShowAuth}
+      />
     </Dialog>
   );
 }

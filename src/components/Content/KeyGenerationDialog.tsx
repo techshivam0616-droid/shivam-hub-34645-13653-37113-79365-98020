@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import blueTick from '@/assets/blue-tick.png';
 
 interface KeyGenerationDialogProps {
   open: boolean;
@@ -102,7 +103,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
           <div className="flex flex-col items-center justify-center py-6 space-y-6">
             <div className="space-y-3 w-full">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
+                <img src={blueTick} alt="Blue tick" className="h-6 w-6 mt-1 flex-shrink-0" />
                 <div>
                   <p className="text-foreground font-medium mb-2">
                     एक बार Key Generate करने के बाद:
