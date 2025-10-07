@@ -9,15 +9,17 @@ import { toast } from 'sonner';
 interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restrictToEmail?: string;
+  onSuccess?: () => void;
 }
 
-export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
+export function AuthDialog({ open, onOpenChange, restrictToEmail, onSuccess }: AuthDialogProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signOut } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,12 +28,23 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     try {
       if (isLogin) {
         await signIn(email, password);
+        // If maintenance restricts login to a specific email, enforce it
+        if (restrictToEmail && email.toLowerCase() !== restrictToEmail.toLowerCase()) {
+          await signOut();
+          toast.error('Maintenance mode: only the admin can log in.');
+          return;
+        }
         toast.success('Welcome back!');
       } else {
+        if (restrictToEmail) {
+          toast.error('Sign up is disabled during maintenance.');
+          return;
+        }
         await signUp(email, password, displayName);
         toast.success('Account created successfully!');
       }
       onOpenChange(false);
+      onSuccess?.();
       setEmail('');
       setPassword('');
       setDisplayName('');
@@ -84,14 +97,16 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Please wait...' : isLogin ? 'Login' : 'Sign Up'}
           </Button>
-          <Button
-            type="button"
-            variant="link"
-            className="w-full"
-            onClick={() => setIsLogin(!isLogin)}
-          >
-            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Login'}
-          </Button>
+          {!restrictToEmail && (
+            <Button
+              type="button"
+              variant="link"
+              className="w-full"
+              onClick={() => setIsLogin(!isLogin)}
+            >
+              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Login'}
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>

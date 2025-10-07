@@ -34,16 +34,16 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="upload" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-9">
-            <TabsTrigger value="upload">Upload</TabsTrigger>
-            <TabsTrigger value="edit">Edit</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="verification">Verification</TabsTrigger>
+          <TabsList className="flex flex-wrap gap-2 overflow-x-auto">
+            <TabsTrigger value="upload" className="whitespace-nowrap text-sm">Upload</TabsTrigger>
+            <TabsTrigger value="edit" className="whitespace-nowrap text-sm">Edit</TabsTrigger>
+            <TabsTrigger value="users" className="whitespace-nowrap text-sm">Users</TabsTrigger>
+            <TabsTrigger value="settings" className="whitespace-nowrap text-sm">Settings</TabsTrigger>
+            <TabsTrigger value="leaderboard" className="whitespace-nowrap text-sm">Leaderboard</TabsTrigger>
+            <TabsTrigger value="notifications" className="whitespace-nowrap text-sm">Notifications</TabsTrigger>
+            <TabsTrigger value="maintenance" className="whitespace-nowrap text-sm">Maintenance</TabsTrigger>
+            <TabsTrigger value="messages" className="whitespace-nowrap text-sm">Messages</TabsTrigger>
+            <TabsTrigger value="verification" className="whitespace-nowrap text-sm">Verification</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">

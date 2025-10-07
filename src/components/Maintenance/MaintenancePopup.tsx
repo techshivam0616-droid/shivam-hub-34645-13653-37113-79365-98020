@@ -134,6 +134,12 @@ export function MaintenancePopup() {
       <AuthDialog 
         open={showAuth} 
         onOpenChange={setShowAuth}
+        restrictToEmail="techshivam0616@gmail.com"
+        onSuccess={() => {
+          setShowAuth(false);
+          setOpen(false);
+          navigate('/admin');
+        }}
       />
     </Dialog>
   );

@@ -49,19 +49,11 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
       
       console.log('Shortener response:', data);
       
-      if (data.status === 'success' && data.shortenedUrl) {
-        // Activate key immediately
-        const expiryTime = Date.now() + KEY_EXPIRY_TIME;
-        localStorage.setItem('downloadKeyExpiry', expiryTime.toString());
-        
-        // Redirect to shortener immediately
+        if (data.status === 'success' && data.shortenedUrl) {
+        // Open verification link and wait for callback page to activate the key
         window.open(data.shortenedUrl, '_blank');
-        toast.success('🔗 Redirecting to verification link...');
-        
-        // Close dialog and trigger download after a short delay
-        setTimeout(() => {
-          onKeyGenerated();
-        }, 500);
+        toast.success('🔗 Verification link opened. Please complete the steps.');
+        onOpenChange(false);
       } else {
         toast.error('Failed to generate link. Please try again.');
         console.error('API Error:', data);
