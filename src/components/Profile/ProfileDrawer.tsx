@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import { useVerification } from '@/hooks/useVerification';
+import blueTick from '@/assets/blue-tick.png';
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -11,6 +13,7 @@ interface ProfileDrawerProps {
 
 export function ProfileDrawer({ open, onOpenChange }: ProfileDrawerProps) {
   const { user, isAdmin, signOut } = useAuth();
+  const { isVerified } = useVerification();
 
   const handleSignOut = async () => {
     try {
@@ -38,7 +41,7 @@ export function ProfileDrawer({ open, onOpenChange }: ProfileDrawerProps) {
             <div className="flex-1">
               <p className="font-semibold flex items-center gap-2">
                 {user.displayName || 'User'}
-                <span className="text-red-600">✅</span>
+                {isVerified && <img src={blueTick} alt="Verified" className="h-5 w-5" />}
                 {isAdmin && <Shield className="h-4 w-4 text-primary" />}
               </p>
               <p className="text-sm text-muted-foreground">{user.email}</p>

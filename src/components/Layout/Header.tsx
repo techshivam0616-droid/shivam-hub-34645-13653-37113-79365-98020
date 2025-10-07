@@ -6,10 +6,13 @@ import { AuthDialog } from '@/components/Auth/AuthDialog';
 import { ProfileDrawer } from '@/components/Profile/ProfileDrawer';
 import { NavigationDrawer } from '@/components/Layout/NavigationDrawer';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
+import { useVerification } from '@/hooks/useVerification';
+import blueTick from '@/assets/blue-tick.png';
 
 export function Header() {
   const { user } = useAuth();
   const { settings } = useWebsiteSettings();
+  const { isVerified } = useVerification();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showNav, setShowNav] = useState(false);
@@ -33,9 +36,9 @@ export function Header() {
                 alt={`${settings.siteName} Logo`} 
                 className="h-10 w-10 rounded-full object-cover"
               />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent flex items-center gap-1">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent flex items-center gap-2">
                 {settings.siteName}
-                <span className="text-red-600">✅</span>
+                {user && isVerified && <img src={blueTick} alt="Verified" className="h-5 w-5" />}
               </h1>
             </div>
           </div>
