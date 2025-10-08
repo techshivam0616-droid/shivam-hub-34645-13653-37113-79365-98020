@@ -14,14 +14,22 @@ export default function DownloadCallback() {
     localStorage.setItem('downloadKeyExpiry', expiryTime.toString());
     
     console.log('Download key activated from callback');
-    toast.success('🔑 Verification successful! Redirecting...');
+    toast.success('🔑 Download key activated! Valid for 2 hours.');
     
-    // Redirect back to the previous page after 2 seconds
+    // Get return URL from query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('return') || '/';
+    
+    // Redirect back after 2 seconds
     setTimeout(() => {
-      // Go back to the previous page or home
-      const returnUrl = sessionStorage.getItem('downloadReturnUrl') || '/';
-      sessionStorage.removeItem('downloadReturnUrl');
-      navigate(returnUrl);
+      try {
+        // Try to navigate to the decoded URL
+        const decodedUrl = decodeURIComponent(returnUrl);
+        window.location.href = decodedUrl;
+      } catch (error) {
+        console.error('Error redirecting:', error);
+        navigate('/');
+      }
     }, 2000);
   }, [navigate]);
 

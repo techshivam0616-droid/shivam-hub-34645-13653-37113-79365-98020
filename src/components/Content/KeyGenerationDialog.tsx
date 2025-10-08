@@ -33,11 +33,11 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
   const generateShortLink = async () => {
     setLoading(true);
     try {
-      // Save current URL for return
-      sessionStorage.setItem('downloadReturnUrl', window.location.pathname);
+      // Encode current page URL as base64 for return
+      const returnUrl = encodeURIComponent(window.location.href);
       
-      // Create a callback URL that will trigger download when user returns
-      const callbackUrl = `${window.location.origin}/download-callback`;
+      // Create a callback URL with return parameter
+      const callbackUrl = `${window.location.origin}/download-callback?return=${returnUrl}`;
       const alias = `dl_${Date.now()}`;
       
       // Generate short link with proper encoding
@@ -49,10 +49,10 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
       
       console.log('Shortener response:', data);
       
-        if (data.status === 'success' && data.shortenedUrl) {
-        // Open verification link and wait for callback page to activate the key
+      if (data.status === 'success' && data.shortenedUrl) {
+        // Open verification link
         window.open(data.shortenedUrl, '_blank');
-        toast.success('🔗 Verification link opened. Please complete the steps.');
+        toast.success('🔗 Verification link opened. Please complete all steps and you will be redirected back.');
         onOpenChange(false);
       } else {
         toast.error('Failed to generate link. Please try again.');
