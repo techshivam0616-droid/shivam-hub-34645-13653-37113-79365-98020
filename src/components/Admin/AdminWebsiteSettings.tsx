@@ -17,7 +17,8 @@ export function AdminWebsiteSettings() {
     logoUrl: '',
     aboutUs: '',
     whatWeOffer: '',
-    channelLink: ''
+    channelLink: '',
+    keyGenerationEnabled: true
   });
 
   useEffect(() => {
@@ -124,6 +125,22 @@ export function AdminWebsiteSettings() {
             placeholder="https://youtube.com/@yourchannel"
           />
         </div>
+
+        <div className="flex items-center space-x-2 p-4 border rounded-lg">
+          <input
+            type="checkbox"
+            id="keyGenerationEnabled"
+            checked={formData.keyGenerationEnabled}
+            onChange={(e) => setFormData({ ...formData, keyGenerationEnabled: e.target.checked })}
+            className="rounded"
+          />
+          <Label htmlFor="keyGenerationEnabled" className="cursor-pointer">
+            Enable Key Generation for Downloads
+          </Label>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          When disabled, users can download directly without generating a key
+        </p>
 
         <Button onClick={handleSave} disabled={loading} className="w-full">
           <Save className="h-4 w-4 mr-2" />

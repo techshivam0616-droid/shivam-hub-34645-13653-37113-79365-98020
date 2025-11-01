@@ -8,6 +8,7 @@ import { KeyGenerationDialog } from './KeyGenerationDialog';
 import { addDoc, collection, increment, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
+import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
 
 interface DownloadDialogProps {
   open: boolean;
@@ -18,17 +19,24 @@ interface DownloadDialogProps {
 
 export function DownloadDialog({ open, onOpenChange, item, type }: DownloadDialogProps) {
   const { user } = useAuth();
+  const { settings } = useWebsiteSettings();
   const [showAuth, setShowAuth] = useState(false);
   const [showKeyGen, setShowKeyGen] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  // Auto-trigger download when dialog opens if key is valid
+  // Auto-trigger download when dialog opens if key is valid or key generation is disabled
   useEffect(() => {
-    if (open && user && checkKeyValidity()) {
-      console.log('Auto-triggering download - key is valid');
-      performDownload();
+    if (open && user) {
+      // If key generation is disabled, download directly
+      if (!settings.keyGenerationEnabled) {
+        console.log('Key generation disabled, downloading directly');
+        performDownload();
+      } else if (checkKeyValidity()) {
+        console.log('Auto-triggering download - key is valid');
+        performDownload();
+      }
     }
-  }, [open]);
+  }, [open, settings.keyGenerationEnabled]);
 
   const checkKeyValidity = () => {
     const expiry = localStorage.getItem('downloadKeyExpiry');
@@ -98,6 +106,7 @@ export function DownloadDialog({ open, onOpenChange, item, type }: DownloadDialo
     console.log('Download button clicked');
     console.log('User:', user);
     console.log('Item:', item);
+    console.log('Key generation enabled:', settings.keyGenerationEnabled);
     
     // Check if user is logged in
     if (!user) {
@@ -107,7 +116,14 @@ export function DownloadDialog({ open, onOpenChange, item, type }: DownloadDialo
       return;
     }
 
-    // Check if key is valid
+    // If key generation is disabled, download directly
+    if (!settings.keyGenerationEnabled) {
+      console.log('Key generation disabled, downloading directly');
+      performDownload();
+      return;
+    }
+
+    // Check if key is valid (only when key generation is enabled)
     const isKeyValid = checkKeyValidity();
     
     if (!isKeyValid) {

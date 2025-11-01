@@ -11,8 +11,8 @@ interface KeyGenerationDialogProps {
   destinationUrl: string;
 }
 
-const SHORTENER_API = 'https://vplink.in/api';
-const API_KEY = '9645eda8b7b96d2ff2aa9f0b2a97b75a70bee752';
+const SHORTENER_API = 'https://indianshortner.com/api';
+const API_KEY = '5fcc1a3f7caa0f2c0e9d00bd9bcc4869a1dc2bdc';
 const KEY_EXPIRY_TIME = 2 * 60 * 60 * 1000;
 
 export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destinationUrl }: KeyGenerationDialogProps) {

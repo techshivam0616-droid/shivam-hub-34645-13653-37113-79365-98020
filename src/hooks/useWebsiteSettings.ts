@@ -9,6 +9,7 @@ interface WebsiteSettings {
   aboutUs: string;
   whatWeOffer: string;
   channelLink: string;
+  keyGenerationEnabled: boolean;
 }
 
 const defaultSettings: WebsiteSettings = {
@@ -17,7 +18,8 @@ const defaultSettings: WebsiteSettings = {
   logoUrl: 'https://i.postimg.cc/ncZmfw1f/IMG-20250915-215153-604.jpg',
   aboutUs: 'Welcome to our platform where you can discover amazing mods, movies, and courses. We are dedicated to providing quality content for our community.',
   whatWeOffer: 'Game Mods & Enhancements|Movies Collection|Educational Courses|Regular Updates',
-  channelLink: 'https://youtube.com/@techshivam'
+  channelLink: 'https://youtube.com/@techshivam',
+  keyGenerationEnabled: true
 };
 
 export function useWebsiteSettings() {

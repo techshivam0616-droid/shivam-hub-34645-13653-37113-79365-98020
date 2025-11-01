@@ -11,6 +11,7 @@ import { AdminMaintenance } from '@/components/Admin/AdminMaintenance';
 import { AdminMessages } from '@/components/Admin/AdminMessages';
 import { AdminVerification } from '@/components/Admin/AdminVerification';
 import { AdminWebsiteSettings } from '@/components/Admin/AdminWebsiteSettings';
+import { AdminNotice } from '@/components/Admin/AdminNotice';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
@@ -39,6 +40,7 @@ const Admin = () => {
             <TabsTrigger value="edit" className="whitespace-nowrap text-sm">Edit</TabsTrigger>
             <TabsTrigger value="users" className="whitespace-nowrap text-sm">Users</TabsTrigger>
             <TabsTrigger value="settings" className="whitespace-nowrap text-sm">Settings</TabsTrigger>
+            <TabsTrigger value="notice" className="whitespace-nowrap text-sm">Notice</TabsTrigger>
             <TabsTrigger value="leaderboard" className="whitespace-nowrap text-sm">Leaderboard</TabsTrigger>
             <TabsTrigger value="notifications" className="whitespace-nowrap text-sm">Notifications</TabsTrigger>
             <TabsTrigger value="maintenance" className="whitespace-nowrap text-sm">Maintenance</TabsTrigger>
@@ -60,6 +62,10 @@ const Admin = () => {
 
           <TabsContent value="settings">
             <AdminWebsiteSettings />
+          </TabsContent>
+
+          <TabsContent value="notice">
+            <AdminNotice />
           </TabsContent>
 
           <TabsContent value="leaderboard">

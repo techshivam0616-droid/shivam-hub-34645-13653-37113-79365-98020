@@ -62,12 +62,14 @@ export default function DownloadCallback() {
     // 3) Redirect after a short UX delay
     const t = setTimeout(() => {
       try {
-        window.location.assign(targetUrl);
+        // Use window.location.href for more reliable redirect
+        window.location.href = targetUrl;
       } catch (error) {
         console.error('Error redirecting:', error);
+        // Fallback to navigate
         navigate('/');
       }
-    }, 1200);
+    }, 800);
 
     return () => clearTimeout(t);
   }, [navigate]);

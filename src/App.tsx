@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MaintenancePopup } from "@/components/Maintenance/MaintenancePopup";
 import { MaintenanceBlocker } from "@/components/Maintenance/MaintenanceBlocker";
+import { NoticePopup } from "@/components/Home/NoticePopup";
 import Index from "./pages/Index";
 import Mods from "./pages/Mods";
 import Movies from "./pages/Movies";
@@ -28,6 +29,7 @@ const App = () => (
         <BrowserRouter>
           <MaintenanceBlocker>
             <MaintenancePopup />
+            <NoticePopup />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/mods" element={<Mods />} />
