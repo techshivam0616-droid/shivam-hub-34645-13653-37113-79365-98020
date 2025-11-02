@@ -14,6 +14,7 @@ import { AdminWebsiteSettings } from '@/components/Admin/AdminWebsiteSettings';
 import { AdminNotice } from '@/components/Admin/AdminNotice';
 import { AdminBlueTickSettings } from '@/components/Admin/AdminBlueTickSettings';
 import { AdminBlueTickRequests } from '@/components/Admin/AdminBlueTickRequests';
+import { AdminSpecialOffers } from '@/components/Admin/AdminSpecialOffers';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
@@ -37,7 +38,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="upload" className="space-y-6">
-          <TabsList className="flex flex-wrap gap-2 overflow-x-auto">
+        <TabsList className="flex flex-wrap gap-2 overflow-x-auto">
             <TabsTrigger value="upload" className="whitespace-nowrap text-sm">Upload</TabsTrigger>
             <TabsTrigger value="edit" className="whitespace-nowrap text-sm">Edit</TabsTrigger>
             <TabsTrigger value="users" className="whitespace-nowrap text-sm">Users</TabsTrigger>
@@ -50,6 +51,7 @@ const Admin = () => {
             <TabsTrigger value="verification" className="whitespace-nowrap text-sm">Verification</TabsTrigger>
             <TabsTrigger value="bluetick-settings" className="whitespace-nowrap text-sm">Blue Tick Settings</TabsTrigger>
             <TabsTrigger value="bluetick-requests" className="whitespace-nowrap text-sm">Blue Tick Requests</TabsTrigger>
+            <TabsTrigger value="special-offers" className="whitespace-nowrap text-sm">Special Offers</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -99,7 +101,12 @@ const Admin = () => {
           <TabsContent value="bluetick-requests">
             <AdminBlueTickRequests />
           </TabsContent>
+
+          <TabsContent value="special-offers">
+            <AdminSpecialOffers />
+          </TabsContent>
         </Tabs>
+
       </div>
     </div>
   );

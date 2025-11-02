@@ -16,7 +16,8 @@ export function AdminBlueTickSettings() {
     monthlyPrice: '',
     yearlyPrice: '',
     upiId: '',
-    qrCodeUrl: ''
+    qrCodeUrl: '',
+    specialOffersEnabled: true,
   });
 
   useEffect(() => {
@@ -116,6 +117,17 @@ export function AdminBlueTickSettings() {
               placeholder="https://example.com/qr-code.png"
               required
               rows={3}
+            />
+          </div>
+
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <Label htmlFor="specialOffersEnabled" className="font-medium">Enable Special Offers</Label>
+            <input
+              id="specialOffersEnabled"
+              type="checkbox"
+              className="h-5 w-5"
+              checked={settings.specialOffersEnabled}
+              onChange={(e) => setSettings({ ...settings, specialOffersEnabled: e.target.checked })}
             />
           </div>
 

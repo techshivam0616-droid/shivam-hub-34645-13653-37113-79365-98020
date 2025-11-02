@@ -62,8 +62,8 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
         used: false
       });
 
-      // Create verification success URL with user ID
-      const verificationUrl = `${window.location.origin}/verification-success?userId=${user.uid}`;
+      // Create verification success URL with user ID (hash route to avoid server 404)
+      const verificationUrl = `${window.location.origin}/#/verification-success?userId=${user.uid}`;
       const alias = `vfy_${Date.now()}`;
 
       // Generate short link
