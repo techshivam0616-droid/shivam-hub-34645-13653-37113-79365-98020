@@ -8,6 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { MaintenancePopup } from "@/components/Maintenance/MaintenancePopup";
 import { MaintenanceBlocker } from "@/components/Maintenance/MaintenanceBlocker";
 import { NoticePopup } from "@/components/Home/NoticePopup";
+import { WinterSnow } from "@/components/Theme/WinterSnow";
+import { useWinterTheme } from "@/hooks/useWinterTheme";
 import Index from "./pages/Index";
 import Mods from "./pages/Mods";
 import Movies from "./pages/Movies";
@@ -23,6 +25,35 @@ import BlueTickPurchase from "./pages/BlueTickPurchase";
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  const { winterThemeEnabled } = useWinterTheme();
+
+  return (
+    <>
+      {winterThemeEnabled && <WinterSnow />}
+      <MaintenanceBlocker>
+        <MaintenancePopup />
+        <NoticePopup />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/mods" element={<Mods />} />
+          <Route path="/mod" element={<Mods />} />
+          <Route path="/movies" element={<Movies />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/request-mod" element={<RequestMod />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/download-callback" element={<DownloadCallback />} />
+          <Route path="/verification-success" element={<VerificationSuccess />} />
+          <Route path="/live-chat" element={<LiveChat />} />
+          <Route path="/buy-bluetick" element={<BlueTickPurchase />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </MaintenanceBlocker>
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -30,25 +61,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <HashRouter>
-          <MaintenanceBlocker>
-            <MaintenancePopup />
-            <NoticePopup />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/mods" element={<Mods />} />
-              <Route path="/mod" element={<Mods />} />
-              <Route path="/movies" element={<Movies />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/request-mod" element={<RequestMod />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/download-callback" element={<DownloadCallback />} />
-              <Route path="/verification-success" element={<VerificationSuccess />} />
-              <Route path="/live-chat" element={<LiveChat />} />
-              <Route path="/buy-bluetick" element={<BlueTickPurchase />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </MaintenanceBlocker>
+          <AppContent />
         </HashRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -15,6 +15,7 @@ import { AdminNotice } from '@/components/Admin/AdminNotice';
 import { AdminBlueTickSettings } from '@/components/Admin/AdminBlueTickSettings';
 import { AdminBlueTickRequests } from '@/components/Admin/AdminBlueTickRequests';
 import { AdminSpecialOffers } from '@/components/Admin/AdminSpecialOffers';
+import { AdminTheme } from '@/components/Admin/AdminTheme';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
@@ -43,6 +44,7 @@ const Admin = () => {
             <TabsTrigger value="edit" className="whitespace-nowrap text-sm">Edit</TabsTrigger>
             <TabsTrigger value="users" className="whitespace-nowrap text-sm">Users</TabsTrigger>
             <TabsTrigger value="settings" className="whitespace-nowrap text-sm">Settings</TabsTrigger>
+            <TabsTrigger value="theme" className="whitespace-nowrap text-sm">Theme</TabsTrigger>
             <TabsTrigger value="notice" className="whitespace-nowrap text-sm">Notice</TabsTrigger>
             <TabsTrigger value="leaderboard" className="whitespace-nowrap text-sm">Leaderboard</TabsTrigger>
             <TabsTrigger value="notifications" className="whitespace-nowrap text-sm">Notifications</TabsTrigger>
@@ -68,6 +70,10 @@ const Admin = () => {
 
           <TabsContent value="settings">
             <AdminWebsiteSettings />
+          </TabsContent>
+
+          <TabsContent value="theme">
+            <AdminTheme />
           </TabsContent>
 
           <TabsContent value="notice">

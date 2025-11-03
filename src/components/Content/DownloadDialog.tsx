@@ -73,39 +73,54 @@ export function DownloadDialog({ open, onOpenChange, item, type }: DownloadDialo
 
     setDownloading(true);
     try {
-      // Update user activity timestamp for live user tracking
+      // Update user activity timestamp for live user tracking (create if doesn't exist)
       if (user?.uid) {
-        await updateDoc(doc(db, 'user_stats', user.uid), {
-          lastActivity: new Date().toISOString()
-        });
-      }
-
-      // Check if user is banned
-      const userStatsDoc = await getDoc(doc(db, 'user_stats', user?.uid));
-      if (userStatsDoc.exists() && userStatsDoc.data()?.banned === true) {
-        toast.error('🚫 Your account has been banned. Cannot download.');
-        setDownloading(false);
-        onOpenChange(false);
-        return;
+        try {
+          const userStatsRef = doc(db, 'user_stats', user.uid);
+          const userStatsDoc = await getDoc(userStatsRef);
+          
+          if (userStatsDoc.exists()) {
+            // Check if user is banned
+            if (userStatsDoc.data()?.banned === true) {
+              toast.error('🚫 Your account has been banned. Cannot download.');
+              setDownloading(false);
+              onOpenChange(false);
+              return;
+            }
+            await updateDoc(userStatsRef, {
+              lastActivity: new Date().toISOString()
+            });
+          }
+        } catch (error) {
+          console.log('User stats update skipped:', error);
+        }
       }
 
       // Track download
-      await addDoc(collection(db, 'downloads'), {
-        userId: user?.uid,
-        userEmail: user?.email,
-        itemId: item.id,
-        itemTitle: item.title,
-        type: type,
-        downloadedAt: new Date().toISOString()
-      });
+      try {
+        await addDoc(collection(db, 'downloads'), {
+          userId: user?.uid,
+          userEmail: user?.email,
+          itemId: item.id,
+          itemTitle: item.title,
+          type: type,
+          downloadedAt: new Date().toISOString()
+        });
+      } catch (error) {
+        console.log('Download tracking skipped:', error);
+      }
 
       // Update download count
-      const itemRef = doc(db, type, item.id);
-      await updateDoc(itemRef, {
-        downloadCount: increment(1)
-      });
+      try {
+        const itemRef = doc(db, type, item.id);
+        await updateDoc(itemRef, {
+          downloadCount: increment(1)
+        });
+      } catch (error) {
+        console.log('Download count update skipped:', error);
+      }
 
-      // Open download link
+      // Open download link - this is the main action
       console.log('Opening download URL:', item.downloadUrl);
       window.open(item.downloadUrl, '_blank');
       toast.success('Download started! ✅');
