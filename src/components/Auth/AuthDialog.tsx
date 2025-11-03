@@ -3,8 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { FcGoogle } from 'react-icons/fc';
+import { Separator } from '@/components/ui/separator';
 
 interface AuthDialogProps {
   open: boolean;
@@ -19,7 +22,8 @@ export function AuthDialog({ open, onOpenChange, restrictToEmail, onSuccess }: A
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, signOut } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { signIn, signUp, signInWithGoogle, signOut } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,12 +59,60 @@ export function AuthDialog({ open, onOpenChange, restrictToEmail, onSuccess }: A
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (restrictToEmail) {
+      toast.error('Google sign-in is disabled during maintenance.');
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      toast.success('Successfully signed in with Google!');
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
+      toast.error(error.message || 'Google sign-in failed');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isLogin ? 'Login' : 'Sign Up'}</DialogTitle>
         </DialogHeader>
+        
+        {!restrictToEmail && (
+          <div className="space-y-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 relative"
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+            >
+              <FcGoogle className="h-5 w-5 mr-2" />
+              Continue with Google
+              <Badge 
+                variant="secondary" 
+                className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs"
+              >
+                Recommended
+              </Badge>
+            </Button>
+            
+            <div className="relative">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+                OR
+              </span>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div className="space-y-2">
