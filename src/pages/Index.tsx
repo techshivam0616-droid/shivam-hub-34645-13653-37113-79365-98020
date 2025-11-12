@@ -2,6 +2,7 @@ import { Header } from '@/components/Layout/Header';
 import { QuoteCarousel } from '@/components/Home/QuoteCarousel';
 import { SectionCard } from '@/components/Home/SectionCard';
 import { ChannelPopup } from '@/components/Home/ChannelPopup';
+import { HomePopup } from '@/components/Home/HomePopup';
 import { Package, Film, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
@@ -34,6 +35,7 @@ const Index = () => {
     <div className="min-h-screen bg-background relative">
       <Header />
       <ChannelPopup />
+      <HomePopup />
       
       <main className="container px-4 py-12 space-y-16 relative z-10">
         {/* Hero Section */}

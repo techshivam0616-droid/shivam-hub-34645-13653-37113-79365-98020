@@ -16,6 +16,7 @@ import { AdminBlueTickSettings } from '@/components/Admin/AdminBlueTickSettings'
 import { AdminBlueTickRequests } from '@/components/Admin/AdminBlueTickRequests';
 import { AdminSpecialOffers } from '@/components/Admin/AdminSpecialOffers';
 import { AdminTheme } from '@/components/Admin/AdminTheme';
+import { AdminPopup } from '@/components/Admin/AdminPopup';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
@@ -54,6 +55,7 @@ const Admin = () => {
             <TabsTrigger value="bluetick-settings" className="whitespace-nowrap text-sm">Blue Tick Settings</TabsTrigger>
             <TabsTrigger value="bluetick-requests" className="whitespace-nowrap text-sm">Blue Tick Requests</TabsTrigger>
             <TabsTrigger value="special-offers" className="whitespace-nowrap text-sm">Special Offers</TabsTrigger>
+            <TabsTrigger value="popup" className="whitespace-nowrap text-sm">Popup</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -110,6 +112,10 @@ const Admin = () => {
 
           <TabsContent value="special-offers">
             <AdminSpecialOffers />
+          </TabsContent>
+
+          <TabsContent value="popup">
+            <AdminPopup />
           </TabsContent>
         </Tabs>
 
