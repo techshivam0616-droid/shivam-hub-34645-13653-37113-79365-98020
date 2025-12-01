@@ -27,7 +27,8 @@ const Index = () => {
       icon: Film,
       title: 'Movies',
       description: 'Access a vast collection of movies across all genres',
-      path: '/movies',
+      path: 'https://tech-movies.vercel.app/',
+      external: true,
     },
     {
       icon: GraduationCap,

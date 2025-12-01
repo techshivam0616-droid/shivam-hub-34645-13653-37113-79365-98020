@@ -18,9 +18,12 @@ export function NavigationDrawer({ open, onOpenChange }: NavigationDrawerProps) 
   const { isVerified } = useVerification();
   const [showChannels, setShowChannels] = useState(false);
 
-  const handleNavigation = (path?: string, action?: string) => {
+  const handleNavigation = (path?: string, action?: string, external?: boolean) => {
     if (action === 'channels') {
       setShowChannels(true);
+    } else if (external && path) {
+      window.open(path, '_blank');
+      onOpenChange(false);
     } else if (path) {
       navigate(path);
       onOpenChange(false);
@@ -30,7 +33,7 @@ export function NavigationDrawer({ open, onOpenChange }: NavigationDrawerProps) 
   const menuItems = [
     { icon: Package, label: 'Mods', path: '/mods' },
     { icon: Gamepad2, label: 'Games', path: '/games' },
-    { icon: Film, label: 'Movies', path: '/movies' },
+    { icon: Film, label: 'Movies', path: 'https://tech-movies.vercel.app/', external: true },
     { icon: GraduationCap, label: 'Courses', path: '/courses' },
     { icon: MessageCircle, label: 'Live Chat', path: '/live-chat' },
     { icon: Youtube, label: 'Subscribe to Channels', action: 'channels' },
@@ -53,7 +56,7 @@ export function NavigationDrawer({ open, onOpenChange }: NavigationDrawerProps) 
                 key={item.label}
                 variant="ghost"
                 className="w-full justify-start"
-                onClick={() => handleNavigation(item.path, item.action)}
+                onClick={() => handleNavigation(item.path, item.action, item.external)}
               >
                 <item.icon className="h-5 w-5 mr-3" />
                 {item.label}

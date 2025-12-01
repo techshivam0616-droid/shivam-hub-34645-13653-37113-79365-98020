@@ -13,14 +13,19 @@ interface SectionCardProps {
   description: string;
   path: string;
   index: number;
+  external?: boolean;
 }
 
-export function SectionCard({ icon: Icon, title, description, path, index }: SectionCardProps) {
+export function SectionCard({ icon: Icon, title, description, path, index, external }: SectionCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
 
   const handleGetStarted = () => {
+    if (external) {
+      window.open(path, '_blank');
+      return;
+    }
     if (!user) {
       setShowAuth(true);
     } else {

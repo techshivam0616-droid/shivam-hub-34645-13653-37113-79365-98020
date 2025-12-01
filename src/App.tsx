@@ -12,7 +12,7 @@ import { WinterSnow } from "@/components/Theme/WinterSnow";
 import { useWinterTheme } from "@/hooks/useWinterTheme";
 import Index from "./pages/Index";
 import Mods from "./pages/Mods";
-import Movies from "./pages/Movies";
+
 import Courses from "./pages/Courses";
 import Games from "./pages/Games";
 import Admin from "./pages/Admin";
@@ -40,7 +40,7 @@ const AppContent = () => {
           <Route path="/mods" element={<Mods />} />
           <Route path="/mod" element={<Mods />} />
           <Route path="/games" element={<Games />} />
-          <Route path="/movies" element={<Movies />} />
+          
           <Route path="/courses" element={<Courses />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/request-mod" element={<RequestMod />} />
