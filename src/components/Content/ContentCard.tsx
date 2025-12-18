@@ -7,7 +7,7 @@ import { DownloadDialog } from './DownloadDialog';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVerification } from '@/hooks/useVerification';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface ContentCardProps {
   item: any;
@@ -18,6 +18,7 @@ interface ContentCardProps {
 export function ContentCard({ item, type, viewMode }: ContentCardProps) {
   const { user } = useAuth();
   const { isVerified } = useVerification();
+  const navigate = useNavigate();
   const [showDownload, setShowDownload] = useState(false);
 
   // Check if item is new (within 7 days)
@@ -33,7 +34,8 @@ export function ContentCard({ item, type, viewMode }: ContentCardProps) {
 
   const handleDownloadClick = () => {
     if (isPremium && !isVerified) {
-      toast.error('🔒 This is premium content. Buy Blue Tick to access!');
+      // Redirect to blue tick purchase page
+      navigate('/buy-bluetick');
       return;
     }
     setShowDownload(true);

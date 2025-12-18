@@ -3,14 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Shield, Crown } from 'lucide-react';
+import { User, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVerification } from '@/hooks/useVerification';
 import blueTick from '@/assets/blue-tick.png';
 import { useState } from 'react';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useNavigate } from 'react-router-dom';
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -20,7 +19,6 @@ interface ProfileDrawerProps {
 export function ProfileDrawer({ open, onOpenChange }: ProfileDrawerProps) {
   const { user, isAdmin, signOut } = useAuth();
   const { isVerified } = useVerification();
-  const navigate = useNavigate();
 
   const [editingName, setEditingName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(user?.displayName || '');
@@ -113,21 +111,6 @@ export function ProfileDrawer({ open, onOpenChange }: ProfileDrawerProps) {
           )}
 
           <div className="space-y-4">
-            {/* Blue Tick Purchase */}
-            {!isVerified && (
-              <Button 
-                variant="outline" 
-                className="w-full justify-start border-primary/50 hover:bg-primary/10"
-                onClick={() => {
-                  navigate('/buy-bluetick');
-                  onOpenChange(false);
-                }}
-              >
-                <Crown className="h-4 w-4 mr-2 text-primary" />
-                Get Blue Tick Verification
-              </Button>
-            )}
-
             {/* Edit Name */}
             {!editingName ? (
               <Button variant="outline" className="w-full justify-between" onClick={() => setEditingName(true)}>
