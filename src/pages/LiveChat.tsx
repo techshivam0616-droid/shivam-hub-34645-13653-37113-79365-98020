@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, getDoc, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, getDoc, where, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ interface Message {
   isPrivate?: boolean;
   recipientId?: string;
   recipientName?: string;
+  reactions?: { [emoji: string]: string[] }; // emoji -> array of userIds
 }
 
 interface OnlineUser {
@@ -94,7 +95,10 @@ export default function LiveChat() {
         })
         .filter(m => !m.isPrivate); // Only show public messages
       
-      setMessages(messageList);
+      setMessages(messageList.map(m => ({
+        ...m,
+        reactions: snapshot.docs.find(d => d.id === m.id)?.data().reactions || {}
+      })));
 
       // Check verification status for all unique users
       const uniqueEmails = [...new Set(messageList.map(m => m.userEmail).filter(Boolean))];
@@ -242,98 +246,189 @@ export default function LiveChat() {
     }
   };
 
-  const reactions = ['❤️', '🔥', '⭐', '👍', '😂'];
+  const reactions = ['❤️', '🔥', '⭐', '👍', '😂', '👏', '😍'];
+  const [showReactions, setShowReactions] = useState<string | null>(null);
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+    
+    try {
+      const messageRef = doc(db, 'messages', messageId);
+      const messageDoc = await getDoc(messageRef);
+      
+      if (messageDoc.exists()) {
+        const currentReactions = messageDoc.data().reactions || {};
+        const emojiReactions = currentReactions[emoji] || [];
+        
+        if (emojiReactions.includes(user.uid)) {
+          // Remove reaction
+          const newReactions = {
+            ...currentReactions,
+            [emoji]: emojiReactions.filter((id: string) => id !== user.uid)
+          };
+          await updateDoc(messageRef, { reactions: newReactions });
+        } else {
+          // Add reaction
+          const newReactions = {
+            ...currentReactions,
+            [emoji]: [...emojiReactions, user.uid]
+          };
+          await updateDoc(messageRef, { reactions: newReactions });
+        }
+      }
+      setShowReactions(null);
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto max-w-4xl h-screen flex flex-col p-4">
-        {/* Header */}
+    <div className="h-screen bg-gradient-to-br from-background via-background to-primary/5 flex flex-col overflow-hidden">
+      <div className="container mx-auto max-w-4xl flex flex-col h-full p-3">
+        {/* Header - Compact */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4 mb-4 pb-4 border-b border-primary/20"
+          className="flex items-center gap-3 pb-2 border-b border-primary/20 shrink-0"
         >
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => navigate('/')}
-            className="hover:bg-primary/10"
+            className="hover:bg-primary/10 h-8 w-8 p-0"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold flex items-center gap-2 gradient-text">
-              <MessageCircle className="h-6 w-6 text-primary" />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold flex items-center gap-2 gradient-text">
+              <MessageCircle className="h-5 w-5 text-primary" />
               Live Chat
-              <Sparkles className="h-5 w-5 text-yellow-500 animate-pulse" />
             </h1>
-            <p className="text-sm text-muted-foreground">{messages.length} messages • {onlineUsers.length + 1} online</p>
+            <p className="text-xs text-muted-foreground">{messages.length} messages • {onlineUsers.length + 1} online</p>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowUsers(true)}
-            className="gap-2 border-primary/30 hover:bg-primary/10"
+            className="gap-1 border-primary/30 hover:bg-primary/10 h-8 text-xs"
           >
-            <Users className="h-4 w-4" />
+            <Users className="h-3 w-3" />
             Users
           </Button>
         </motion.div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto pr-2 mb-4" ref={scrollRef}>
-          <div className="space-y-4 py-4">
+        {/* Messages - Takes remaining space */}
+        <div className="flex-1 overflow-y-auto py-2 min-h-0" ref={scrollRef}>
+          <div className="space-y-3">
             <AnimatePresence>
               {messages.length === 0 ? (
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-12"
+                  className="text-center py-8"
                 >
-                  <MessageCircle className="h-16 w-16 mx-auto text-primary/30 mb-4" />
-                  <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+                  <MessageCircle className="h-12 w-12 mx-auto text-primary/30 mb-3" />
+                  <p className="text-muted-foreground text-sm">No messages yet. Start the conversation!</p>
                 </motion.div>
               ) : (
                 messages.map((message, index) => {
                   const isOwn = message.userId === user?.uid;
                   const isVerified = verifiedUsers.has(message.userEmail);
+                  const messageReactions = message.reactions || {};
                   
                   return (
                     <motion.div
                       key={message.id}
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: index * 0.02 }}
-                      className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.01 }}
+                      className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : ''} group relative`}
                     >
-                      <Avatar className={`h-10 w-10 ring-2 ${isVerified ? 'ring-blue-500' : 'ring-border'}`}>
-                        <AvatarFallback className={isVerified ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white' : ''}>
+                      <Avatar className={`h-8 w-8 ring-2 shrink-0 ${isVerified ? 'ring-blue-500' : 'ring-border'}`}>
+                        <AvatarFallback className={`text-xs ${isVerified ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white' : ''}`}>
                           {message.userName.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className={`flex flex-col max-w-[70%] ${isOwn ? 'items-end' : ''}`}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-sm font-semibold ${isVerified ? 'text-blue-500' : ''}`}>
+                      <div className={`flex flex-col max-w-[75%] ${isOwn ? 'items-end' : ''}`}>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className={`text-xs font-semibold ${isVerified ? 'text-blue-500' : ''}`}>
                             {message.userName}
                           </span>
                           {isVerified && (
-                            <img src={blueTick} alt="Verified" className="h-4 w-4 object-contain" />
+                            <img src={blueTick} alt="Verified" className="h-3 w-3 object-contain" />
                           )}
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </div>
-                        <div
-                          className={`rounded-2xl px-4 py-3 ${
-                            isVerified
-                              ? 'bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 border-2 border-blue-400/50 shadow-lg shadow-blue-500/20'
-                              : isOwn
-                              ? 'bg-primary text-primary-foreground rounded-br-md'
-                              : 'bg-muted rounded-bl-md'
-                          }`}
-                        >
-                          <p className="text-sm leading-relaxed">{message.text}</p>
+                        <div className="relative">
+                          <div
+                            className={`rounded-2xl px-3 py-2 text-sm ${
+                              isVerified
+                                ? 'bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 border border-blue-400/50'
+                                : isOwn
+                                ? 'bg-primary text-primary-foreground rounded-br-sm'
+                                : 'bg-muted rounded-bl-sm'
+                            }`}
+                          >
+                            <p className="leading-relaxed break-words">{message.text}</p>
+                          </div>
+                          
+                          {/* Reaction button */}
+                          <button
+                            onClick={() => setShowReactions(showReactions === message.id ? null : message.id)}
+                            className={`absolute -bottom-1 ${isOwn ? '-left-6' : '-right-6'} opacity-0 group-hover:opacity-100 transition-opacity bg-card border border-border rounded-full p-1 shadow-sm hover:bg-muted`}
+                          >
+                            <Heart className="h-3 w-3" />
+                          </button>
+                          
+                          {/* Reaction picker */}
+                          <AnimatePresence>
+                            {showReactions === message.id && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                                className={`absolute top-full mt-1 ${isOwn ? 'right-0' : 'left-0'} z-20 bg-card border border-border rounded-full px-2 py-1 shadow-lg flex gap-1`}
+                              >
+                                {reactions.map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => toggleReaction(message.id, emoji)}
+                                    className={`text-base hover:scale-125 transition-transform p-0.5 ${
+                                      messageReactions[emoji]?.includes(user?.uid || '') ? 'bg-primary/20 rounded-full' : ''
+                                    }`}
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                        <span className="text-xs text-muted-foreground mt-1">
-                          {new Date(message.timestamp).toLocaleTimeString()}
-                        </span>
+                        
+                        {/* Show reactions */}
+                        {Object.keys(messageReactions).length > 0 && (
+                          <div className={`flex gap-1 mt-1 flex-wrap ${isOwn ? 'justify-end' : ''}`}>
+                            {Object.entries(messageReactions).map(([emoji, users]) => {
+                              if (!Array.isArray(users) || users.length === 0) return null;
+                              return (
+                                <motion.button
+                                  key={emoji}
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  onClick={() => toggleReaction(message.id, emoji)}
+                                  className={`flex items-center gap-0.5 text-xs bg-muted/80 hover:bg-muted border border-border rounded-full px-1.5 py-0.5 ${
+                                    users.includes(user?.uid || '') ? 'ring-1 ring-primary' : ''
+                                  }`}
+                                >
+                                  <span>{emoji}</span>
+                                  <span className="text-muted-foreground">{users.length}</span>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   );
@@ -343,23 +438,23 @@ export default function LiveChat() {
           </div>
         </div>
 
-        {/* Input */}
+        {/* Input - Fixed at bottom */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex gap-2 p-4 bg-card/50 backdrop-blur-sm rounded-2xl border border-primary/20 shadow-lg"
+          className="flex gap-2 p-2 bg-card/80 backdrop-blur-sm rounded-xl border border-primary/20 shadow-lg shrink-0 mt-2"
         >
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1 border-primary/20 focus:border-primary bg-background/50"
+            className="flex-1 border-primary/20 focus:border-primary bg-background/50 h-9 text-sm"
           />
           <Button 
             onClick={sendMessage} 
-            size="icon" 
-            className="bg-primary hover:bg-primary/90 rounded-xl"
+            size="sm" 
+            className="bg-primary hover:bg-primary/90 rounded-lg h-9 w-9 p-0"
           >
             <Send className="h-4 w-4" />
           </Button>
