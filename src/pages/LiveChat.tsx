@@ -45,7 +45,7 @@ export default function LiveChat() {
   const [selectedUser, setSelectedUser] = useState<OnlineUser | null>(null);
   const [privateMessages, setPrivateMessages] = useState<Message[]>([]);
   const [privateNewMessage, setPrivateNewMessage] = useState('');
-
+  const [mutualFollowers, setMutualFollowers] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!user) {
       toast.error('Please login to access live chat');
@@ -149,6 +149,29 @@ export default function LiveChat() {
       setOnlineUsers(users.filter(u => u.id !== user.uid));
     });
 
+    // Check mutual followers for current user
+    const checkMutualFollowers = async () => {
+      if (!user) return;
+      try {
+        const profileDoc = await getDoc(doc(db, 'profiles', user.uid));
+        if (profileDoc.exists()) {
+          const myFollowing = profileDoc.data()?.following || [];
+          const myFollowers = profileDoc.data()?.followers || [];
+          const mutual = new Set<string>();
+          
+          for (const userId of myFollowing) {
+            if (myFollowers.includes(userId)) {
+              mutual.add(userId);
+            }
+          }
+          setMutualFollowers(mutual);
+        }
+      } catch (error) {
+        console.log('Error checking followers:', error);
+      }
+    };
+    checkMutualFollowers();
+
     return () => {
       unsubscribe();
       unsubPresence();
@@ -218,6 +241,12 @@ export default function LiveChat() {
 
   const sendPrivateMessage = async () => {
     if (!privateNewMessage.trim() || !user || !selectedUser) return;
+
+    // Check if mutual follow
+    if (!mutualFollowers.has(selectedUser.id)) {
+      toast.error('You can only message users who follow you back!');
+      return;
+    }
 
     try {
       await addDoc(collection(db, 'messages'), {
@@ -576,19 +605,37 @@ export default function LiveChat() {
             </ScrollArea>
 
             {/* Input */}
-            <div className="p-4 border-t border-border flex gap-2">
-              <Input
-                value={privateNewMessage}
-                onChange={(e) => setPrivateNewMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') sendPrivateMessage();
-                }}
-                placeholder={`Message ${selectedUser.name}...`}
-                className="flex-1"
-              />
-              <Button onClick={sendPrivateMessage} size="icon">
-                <Send className="h-4 w-4" />
-              </Button>
+            <div className="p-4 border-t border-border">
+              {mutualFollowers.has(selectedUser.id) ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={privateNewMessage}
+                    onChange={(e) => setPrivateNewMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') sendPrivateMessage();
+                    }}
+                    placeholder={`Message ${selectedUser.name}...`}
+                    className="flex-1"
+                  />
+                  <Button onClick={sendPrivateMessage} size="icon">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    💬 Follow each other on Social to message!
+                  </p>
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    onClick={() => navigate('/social')}
+                    className="mt-1"
+                  >
+                    Go to Social →
+                  </Button>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

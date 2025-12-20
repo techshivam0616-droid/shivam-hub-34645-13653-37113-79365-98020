@@ -26,6 +26,7 @@ import VerificationSuccess from "./pages/VerificationSuccess";
 import NotFound from "./pages/NotFound";
 import LiveChat from "./pages/LiveChat";
 import BlueTickPurchase from "./pages/BlueTickPurchase";
+import Social from "./pages/Social";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const AppContent = () => {
           <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/live-chat" element={<LiveChat />} />
           <Route path="/buy-bluetick" element={<BlueTickPurchase />} />
+          <Route path="/social" element={<Social />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </MaintenanceBlocker>
