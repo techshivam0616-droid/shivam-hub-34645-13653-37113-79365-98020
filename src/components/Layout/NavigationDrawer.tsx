@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Package, Film, GraduationCap, Youtube, Send, MessageSquare, Shield, MessageCircle, Gamepad2, Layers, FolderArchive, Crown, Users } from 'lucide-react';
+import { Package, Film, GraduationCap, Youtube, Send, MessageSquare, Shield, MessageCircle, Gamepad2, Layers, FolderArchive, Crown, Users, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { ChannelDialog } from '@/components/Channels/ChannelDialog';
@@ -31,6 +31,7 @@ export function NavigationDrawer({ open, onOpenChange }: NavigationDrawerProps) 
   };
 
   const menuItems = [
+    { icon: Smartphone, label: 'My Apps', path: '/#my-apps' },
     { icon: Package, label: 'Mods', path: '/mods' },
     { icon: Gamepad2, label: 'Games', path: '/games' },
     { icon: Layers, label: 'Assets', path: '/assets' },

@@ -3,6 +3,7 @@ import { QuoteCarousel } from '@/components/Home/QuoteCarousel';
 import { SectionCard } from '@/components/Home/SectionCard';
 import { ChannelPopup } from '@/components/Home/ChannelPopup';
 import { HomePopup } from '@/components/Home/HomePopup';
+import { MyAppsSection } from '@/components/Home/MyAppsSection';
 import { Package, Film, GraduationCap, Gamepad2, Layers, FolderArchive } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
@@ -57,6 +58,28 @@ const Index = () => {
       <HomePopup />
       
       <main className="container px-4 py-12 space-y-16 relative z-10">
+        {/* Cartoon Decorations */}
+        <div className="absolute top-20 left-10 w-24 h-24 opacity-10 pointer-events-none">
+          <svg viewBox="0 0 100 100" className="w-full h-full text-primary animate-bounce">
+            <circle cx="50" cy="50" r="45" fill="currentColor" />
+            <circle cx="35" cy="40" r="10" fill="white" />
+            <circle cx="65" cy="40" r="10" fill="white" />
+            <circle cx="35" cy="40" r="5" fill="black" />
+            <circle cx="65" cy="40" r="5" fill="black" />
+            <path d="M 30 65 Q 50 85 70 65" stroke="white" strokeWidth="5" fill="none" />
+          </svg>
+        </div>
+        <div className="absolute top-40 right-10 w-20 h-20 opacity-10 pointer-events-none">
+          <svg viewBox="0 0 100 100" className="w-full h-full text-secondary animate-pulse">
+            <polygon points="50,5 61,40 98,40 68,62 79,97 50,75 21,97 32,62 2,40 39,40" fill="currentColor" />
+          </svg>
+        </div>
+        <div className="absolute bottom-40 left-20 w-16 h-16 opacity-10 pointer-events-none">
+          <svg viewBox="0 0 100 100" className="w-full h-full text-accent animate-spin" style={{ animationDuration: '10s' }}>
+            <rect x="10" y="10" width="80" height="80" rx="15" fill="currentColor" />
+          </svg>
+        </div>
+
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -81,6 +104,11 @@ const Index = () => {
             {settings.siteDescription}
           </motion.p>
         </motion.div>
+
+        {/* My Apps Section */}
+        <div id="my-apps">
+          <MyAppsSection />
+        </div>
 
         <motion.div
           initial={{ opacity: 0 }}

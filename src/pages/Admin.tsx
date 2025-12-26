@@ -22,6 +22,7 @@ import { AdminFeedback } from '@/components/Admin/AdminFeedback';
 import { AdminShayaris } from '@/components/Admin/AdminShayaris';
 import { AdminSectionSettings } from '@/components/Admin/AdminSectionSettings';
 import { AdminCoupons } from '@/components/Admin/AdminCoupons';
+import { AdminMyApps } from '@/components/Admin/AdminMyApps';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
@@ -47,6 +48,7 @@ const Admin = () => {
         <Tabs defaultValue="upload" className="space-y-6">
         <TabsList className="flex flex-wrap gap-2 overflow-x-auto">
             <TabsTrigger value="upload" className="whitespace-nowrap text-sm">Upload</TabsTrigger>
+            <TabsTrigger value="myapps" className="whitespace-nowrap text-sm">My Apps</TabsTrigger>
             <TabsTrigger value="edit" className="whitespace-nowrap text-sm">Edit</TabsTrigger>
             <TabsTrigger value="users" className="whitespace-nowrap text-sm">Users</TabsTrigger>
             <TabsTrigger value="settings" className="whitespace-nowrap text-sm">Settings</TabsTrigger>
@@ -70,6 +72,10 @@ const Admin = () => {
 
           <TabsContent value="upload">
             <AdminUpload />
+          </TabsContent>
+
+          <TabsContent value="myapps">
+            <AdminMyApps />
           </TabsContent>
 
           <TabsContent value="edit">
