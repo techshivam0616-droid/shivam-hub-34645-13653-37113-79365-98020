@@ -10,6 +10,7 @@ import { MaintenanceBlocker } from "@/components/Maintenance/MaintenanceBlocker"
 import { NoticePopup } from "@/components/Home/NoticePopup";
 import { WinterSnow } from "@/components/Theme/WinterSnow";
 import { FeedbackPopup } from "@/components/Feedback/FeedbackPopup";
+import { NotificationPrompt } from "@/components/Notifications/NotificationPrompt";
 import { useWinterTheme } from "@/hooks/useWinterTheme";
 import Index from "./pages/Index";
 import Mods from "./pages/Mods";
@@ -40,6 +41,7 @@ const AppContent = () => {
         <MaintenancePopup />
         <NoticePopup />
         <FeedbackPopup />
+        <NotificationPrompt />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/mods" element={<Mods />} />

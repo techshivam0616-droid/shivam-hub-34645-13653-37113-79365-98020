@@ -23,6 +23,7 @@ import { AdminShayaris } from '@/components/Admin/AdminShayaris';
 import { AdminSectionSettings } from '@/components/Admin/AdminSectionSettings';
 import { AdminCoupons } from '@/components/Admin/AdminCoupons';
 import { AdminMyApps } from '@/components/Admin/AdminMyApps';
+import AdminPushNotifications from '@/components/Admin/AdminPushNotifications';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
@@ -68,6 +69,7 @@ const Admin = () => {
             <TabsTrigger value="livechat" className="whitespace-nowrap text-sm">Live Chat</TabsTrigger>
             <TabsTrigger value="feedback" className="whitespace-nowrap text-sm">Feedback</TabsTrigger>
             <TabsTrigger value="shayaris" className="whitespace-nowrap text-sm">Shayaris</TabsTrigger>
+            <TabsTrigger value="push-notifications" className="whitespace-nowrap text-sm">Push Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -152,6 +154,10 @@ const Admin = () => {
 
           <TabsContent value="shayaris">
             <AdminShayaris />
+          </TabsContent>
+
+          <TabsContent value="push-notifications">
+            <AdminPushNotifications />
           </TabsContent>
         </Tabs>
 
