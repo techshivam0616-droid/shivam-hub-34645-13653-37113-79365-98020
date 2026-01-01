@@ -101,19 +101,48 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       return;
     }
 
+    // Check if service worker is supported
+    if (!('serviceWorker' in navigator)) {
+      toast.error('Service workers are not supported in this browser');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Register service worker
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      console.log('Service Worker registered:', registration);
+      // First check current permission status
+      if (Notification.permission === 'denied') {
+        toast.error('Notifications are blocked. Please enable them in your browser settings.');
+        setPermission('denied');
+        setIsLoading(false);
+        return;
+      }
+
+      // Register service worker first
+      let registration;
+      try {
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log('Service Worker registered:', registration);
+        
+        // Wait for the service worker to be ready
+        await navigator.serviceWorker.ready;
+      } catch (swError) {
+        console.error('Service Worker registration failed:', swError);
+        toast.error('Failed to register notification service. Please try again.');
+        setIsLoading(false);
+        return;
+      }
 
       // Request notification permission
       const notificationPermission = await Notification.requestPermission();
       setPermission(notificationPermission);
 
       if (notificationPermission !== 'granted') {
-        toast.error('Notification permission denied');
+        if (notificationPermission === 'denied') {
+          toast.error('Notifications blocked. Enable in browser settings to receive updates.');
+        } else {
+          toast.info('Notification permission not granted');
+        }
         setIsLoading(false);
         return;
       }
@@ -126,16 +155,24 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       });
 
       if (fcmToken) {
-        console.log('FCM Token:', fcmToken);
+        console.log('FCM Token obtained successfully');
         setToken(fcmToken);
         await saveTokenToDatabase(fcmToken);
-        toast.success('Notifications enabled successfully!');
+        toast.success('Notifications enabled! You will receive updates on your device.');
       } else {
-        toast.error('Failed to get notification token');
+        toast.error('Failed to get notification token. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error requesting notification permission:', error);
-      toast.error('Failed to enable notifications');
+      
+      // Provide more specific error messages
+      if (error?.code === 'messaging/permission-blocked') {
+        toast.error('Notifications are blocked. Please enable them in your browser settings.');
+      } else if (error?.code === 'messaging/unsupported-browser') {
+        toast.error('Your browser does not support push notifications.');
+      } else {
+        toast.error('Failed to enable notifications. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
