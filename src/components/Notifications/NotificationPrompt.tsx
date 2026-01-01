@@ -1,24 +1,63 @@
-import { Bell, BellOff, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 
+const DISMISS_KEY = 'notification_prompt_dismissed';
+const LATER_KEY = 'notification_prompt_later';
+const LATER_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
 export function NotificationPrompt() {
   const { permission, isLoading, requestPermission } = usePushNotifications();
   const { user } = useAuth();
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Don't show if not logged in or notifications not supported
-  if (!user || permission === 'unsupported') {
-    return null;
-  }
+  useEffect(() => {
+    // Check if user dismissed permanently or chose "later"
+    const dismissed = localStorage.getItem(DISMISS_KEY);
+    const laterTime = localStorage.getItem(LATER_KEY);
+    
+    if (dismissed === 'true') {
+      setIsVisible(false);
+      return;
+    }
+    
+    if (laterTime) {
+      const laterTimestamp = parseInt(laterTime, 10);
+      if (Date.now() < laterTimestamp) {
+        setIsVisible(false);
+        return;
+      }
+      // Clear expired later preference
+      localStorage.removeItem(LATER_KEY);
+    }
+    
+    // Show if user is logged in and permission is default
+    if (user && permission === 'default') {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [user, permission]);
 
-  // Don't show if already granted
-  if (permission === 'granted') {
-    return null;
-  }
+  const handleLater = () => {
+    localStorage.setItem(LATER_KEY, String(Date.now() + LATER_DURATION));
+    setIsVisible(false);
+  };
 
-  // Don't show if denied (user made their choice)
-  if (permission === 'denied') {
+  const handleClose = () => {
+    localStorage.setItem(DISMISS_KEY, 'true');
+    setIsVisible(false);
+  };
+
+  const handleEnable = async () => {
+    await requestPermission();
+    setIsVisible(false);
+  };
+
+  // Don't show if not visible, not supported, or already granted/denied
+  if (!isVisible || permission === 'unsupported' || permission === 'granted' || permission === 'denied') {
     return null;
   }
 
@@ -30,28 +69,47 @@ export function NotificationPrompt() {
             <Bell className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-foreground">Enable Notifications</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-foreground">Enable Notifications</h4>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 -mr-2 -mt-1"
+                onClick={handleClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Get notified about updates, offers & new content!
+              Get notified about updates, offers & new content on your device!
             </p>
-            <Button
-              onClick={requestPermission}
-              disabled={isLoading}
-              size="sm"
-              className="mt-3"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Enabling...
-                </>
-              ) : (
-                <>
-                  <Bell className="h-4 w-4 mr-2" />
-                  Enable
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2 mt-3">
+              <Button
+                onClick={handleEnable}
+                disabled={isLoading}
+                size="sm"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enabling...
+                  </>
+                ) : (
+                  <>
+                    <Bell className="h-4 w-4 mr-2" />
+                    Enable
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLater}
+                disabled={isLoading}
+              >
+                Later
+              </Button>
+            </div>
           </div>
         </div>
       </div>
