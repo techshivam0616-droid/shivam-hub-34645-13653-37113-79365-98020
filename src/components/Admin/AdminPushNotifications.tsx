@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ref, get, child } from 'firebase/database';
 import { realtimeDb } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Bell, Send, Users, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-
 interface TokenData {
   token: string;
   email: string;
@@ -64,30 +64,32 @@ export default function AdminPushNotifications() {
     setLoading(true);
 
     try {
-      // Note: For production, you should use Firebase Admin SDK via a Cloud Function
-      // This is a client-side demonstration. For actual FCM HTTP v1 API calls,
-      // you need a backend service with proper authentication.
-      
-      // Save notification to Firestore for record keeping
-      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase');
-      
-      await addDoc(collection(db, 'push_notifications'), {
-        title,
-        body,
-        sentAt: serverTimestamp(),
-        recipientCount: tokenList.length,
-        tokens: tokenList,
+      // Call the Edge Function to send FCM notifications
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          title,
+          body,
+          tokens: tokenList,
+        },
       });
 
-      toast.success(`Notification queued for ${tokenList.length} subscribers!`);
-      toast.info('Note: For live push, configure Firebase Cloud Functions with FCM Admin SDK');
-      
-      setTitle('');
-      setBody('');
+      if (error) {
+        throw error;
+      }
+
+      if (data.success) {
+        toast.success(`Notification sent to ${data.sent}/${data.total} devices!`);
+        if (data.failed > 0) {
+          toast.warning(`${data.failed} notifications failed to send`);
+        }
+        setTitle('');
+        setBody('');
+      } else {
+        throw new Error(data.error || 'Failed to send notifications');
+      }
     } catch (error) {
       console.error('Error sending notification:', error);
-      toast.error('Failed to send notification');
+      toast.error('Failed to send notification: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }
