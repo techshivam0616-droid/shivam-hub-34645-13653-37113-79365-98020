@@ -34,9 +34,14 @@ export default function AdminPushNotifications() {
       } else {
         setTokens({});
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching tokens:', error);
-      toast.error('Failed to fetch subscriber tokens');
+      // Check if it's a permission denied error
+      if (error?.code === 'PERMISSION_DENIED') {
+        toast.error('Database permission denied. Please check Firebase Realtime Database rules.');
+      } else {
+        toast.error('Failed to fetch subscriber tokens: ' + (error?.message || 'Unknown error'));
+      }
     } finally {
       setLoadingTokens(false);
     }
