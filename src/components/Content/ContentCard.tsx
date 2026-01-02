@@ -39,11 +39,8 @@ export function ContentCard({ item, type, viewMode }: ContentCardProps) {
 
   const handleDownloadClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    if (isPremium && !isVerified) {
-      navigate('/buy-bluetick');
-      return;
-    }
-    setShowDownload(true);
+    // Navigate to details page instead of opening dialog directly
+    navigate(`/item/${type}/${item.id || 'item'}`, { state: { item } });
   };
 
   return (
