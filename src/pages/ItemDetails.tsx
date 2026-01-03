@@ -4,12 +4,15 @@ import { Header } from '@/components/Layout/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, ArrowLeft, Crown, Lock, Sparkles, RefreshCw, CheckCircle } from 'lucide-react';
+import { Download, ArrowLeft, Crown, Lock, Sparkles, RefreshCw, CheckCircle, Share2, Heart } from 'lucide-react';
 import { DownloadDialog } from '@/components/Content/DownloadDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVerification } from '@/hooks/useVerification';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function ItemDetails() {
   const { type, id } = useParams();
@@ -19,6 +22,8 @@ export default function ItemDetails() {
   const { isVerified } = useVerification();
   const { settings } = useWebsiteSettings();
   const [showDownload, setShowDownload] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
 
   // Get item from location state
   const item = location.state?.item;
@@ -26,8 +31,17 @@ export default function ItemDetails() {
   useEffect(() => {
     if (!item) {
       navigate('/');
+    } else {
+      setLikeCount(item.likes || 0);
+      // Check like status
+      if (user && item.id) {
+        const likeRef = doc(db, 'content_likes', `${user.uid}_${item.id}`);
+        getDoc(likeRef).then((snap) => {
+          if (snap.exists()) setLiked(true);
+        });
+      }
     }
-  }, [item, navigate]);
+  }, [item, navigate, user]);
 
   if (!item) {
     return null;
@@ -48,6 +62,56 @@ export default function ItemDetails() {
       return;
     }
     setShowDownload(true);
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/#/item/${type}/${item.id || 'item'}`;
+    const shareData = {
+      title: item.title || 'Check this out!',
+      text: item.description || 'Amazing content from our site',
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (error) {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) {
+      toast.error('Please login to like');
+      return;
+    }
+    
+    try {
+      const likeRef = doc(db, 'content_likes', `${user.uid}_${item.id}`);
+      if (liked) {
+        await deleteDoc(likeRef);
+        setLiked(false);
+        setLikeCount(prev => Math.max(0, prev - 1));
+        toast.success('Like removed');
+      } else {
+        await setDoc(likeRef, {
+          userId: user.uid,
+          itemId: item.id,
+          itemType: type,
+          createdAt: new Date().toISOString()
+        });
+        setLiked(true);
+        setLikeCount(prev => prev + 1);
+        toast.success('Liked!');
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
   };
 
   const offerItems = settings.whatWeOffer?.split('|') || [];
@@ -101,6 +165,28 @@ export default function ItemDetails() {
                       UPDATED
                     </Badge>
                   )}
+                </div>
+
+                {/* Share & Like buttons */}
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="bg-background/80 backdrop-blur-sm"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-4 w-4 mr-1" />
+                    Share
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className={`bg-background/80 backdrop-blur-sm ${liked ? 'text-red-500' : ''}`}
+                    onClick={handleLike}
+                  >
+                    <Heart className={`h-4 w-4 mr-1 ${liked ? 'fill-current' : ''}`} />
+                    {likeCount}
+                  </Button>
                 </div>
               </div>
             )}

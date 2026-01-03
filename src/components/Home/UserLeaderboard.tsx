@@ -1,0 +1,157 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Trophy, Medal, Award, Download } from 'lucide-react';
+import blueTick from '@/assets/blue-tick.png';
+import { motion } from 'framer-motion';
+
+interface LeaderboardUser {
+  id: string;
+  displayName: string;
+  downloadCount: number;
+  verified: boolean;
+  avatar?: string;
+}
+
+export function UserLeaderboard() {
+  const [users, setUsers] = useState<LeaderboardUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      const [downloadsSnapshot, verifiedUsersSnapshot, profilesSnapshot] = await Promise.all([
+        getDocs(collection(db, 'downloads')),
+        getDocs(collection(db, 'verified_users')),
+        getDocs(collection(db, 'user_profiles'))
+      ]);
+
+      const verifiedEmails = new Set(
+        verifiedUsersSnapshot.docs
+          .filter(doc => doc.data()?.verified === true)
+          .map(doc => doc.id)
+      );
+
+      const profileMap = new Map();
+      profilesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId) {
+          profileMap.set(data.userId, data);
+        }
+      });
+
+      const userMap = new Map<string, LeaderboardUser>();
+
+      downloadsSnapshot.docs.forEach((doc) => {
+        const d = doc.data();
+        if (!d.userId) return;
+        
+        if (!userMap.has(d.userId)) {
+          const profile = profileMap.get(d.userId);
+          userMap.set(d.userId, {
+            id: d.userId,
+            displayName: profile?.displayName || d.userName || d.userEmail?.split('@')[0] || 'User',
+            downloadCount: 0,
+            verified: verifiedEmails.has(d.userEmail),
+            avatar: profile?.avatar
+          });
+        }
+        userMap.get(d.userId)!.downloadCount++;
+      });
+
+      const sorted = Array.from(userMap.values())
+        .sort((a, b) => b.downloadCount - a.downloadCount)
+        .slice(0, 10);
+
+      setUsers(sorted);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIcon = (index: number) => {
+    if (index === 0) return <Trophy className="h-5 w-5 text-yellow-500" />;
+    if (index === 1) return <Medal className="h-5 w-5 text-gray-400" />;
+    if (index === 2) return <Award className="h-5 w-5 text-orange-600" />;
+    return <span className="text-muted-foreground font-bold text-sm">#{index + 1}</span>;
+  };
+
+  if (loading) {
+    return (
+      <Card className="border-2 border-primary/20">
+        <CardContent className="py-8 text-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (users.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+    >
+      <Card className="border-2 border-primary/20 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-primary" />
+            Top Users
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="space-y-2">
+            {users.map((user, index) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className={`flex items-center gap-3 p-2 rounded-lg transition-all hover:bg-muted/50 ${
+                  index < 3 ? 'bg-gradient-to-r from-primary/5 to-transparent' : ''
+                }`}
+              >
+                <div className="w-8 flex justify-center">
+                  {getIcon(index)}
+                </div>
+                
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sm font-bold text-muted-foreground">
+                      {user.displayName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-sm truncate">{user.displayName}</span>
+                    {user.verified && (
+                      <img src={blueTick} alt="Verified" className="h-3.5 w-3.5 object-contain flex-shrink-0" />
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="text-sm font-medium">{user.downloadCount}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}

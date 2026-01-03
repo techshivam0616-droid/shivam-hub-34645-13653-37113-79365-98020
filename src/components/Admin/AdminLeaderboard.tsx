@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { collection, getDocs, query, where, doc, setDoc, orderBy, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Trophy, Medal, Award, Calendar, Download, MessageCircle, PenSquare, Search, TrendingUp, Eye, Trash2 } from 'lucide-react';
+import { Trophy, Medal, Award, Calendar, Download, MessageCircle, PenSquare, Search, Eye, X, Heart, Users, Bookmark } from 'lucide-react';
 import blueTick from '@/assets/blue-tick.png';
-import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface UserStats {
   id: string;
@@ -20,7 +20,14 @@ interface UserStats {
   downloadCount: number;
   messageCount: number;
   shayariCount: number;
+  likeCount: number;
+  followersCount: number;
+  followingCount: number;
+  savedCount: number;
   downloads: { title: string; date: string }[];
+  messages: { text: string; date: string }[];
+  shayaris: { text: string; date: string; likes: number }[];
+  avatar?: string;
 }
 
 export function AdminLeaderboard() {
@@ -73,25 +80,43 @@ export function AdminLeaderboard() {
 
   const fetchAllStats = async () => {
     try {
-      // Fetch downloads
-      const downloadsSnapshot = await getDocs(collection(db, 'downloads'));
+      // Fetch all collections in parallel
+      const [downloadsSnapshot, messagesSnapshot, shayarisSnapshot, verifiedUsersSnapshot, profilesSnapshot, contentLikesSnapshot] = await Promise.all([
+        getDocs(collection(db, 'downloads')),
+        getDocs(collection(db, 'messages')),
+        getDocs(collection(db, 'shayaris')),
+        getDocs(collection(db, 'verified_users')),
+        getDocs(collection(db, 'user_profiles')),
+        getDocs(collection(db, 'content_likes'))
+      ]);
+
       const downloads = downloadsSnapshot.docs.map(doc => doc.data());
-
-      // Fetch messages
-      const messagesSnapshot = await getDocs(collection(db, 'messages'));
       const messages = messagesSnapshot.docs.map(doc => doc.data());
-
-      // Fetch shayaris
-      const shayarisSnapshot = await getDocs(collection(db, 'shayaris'));
       const shayaris = shayarisSnapshot.docs.map(doc => doc.data());
-
-      // Fetch verified users
-      const verifiedUsersSnapshot = await getDocs(collection(db, 'verified_users'));
+      
       const verifiedEmails = new Set(
         verifiedUsersSnapshot.docs
           .filter(doc => doc.data()?.verified === true)
           .map(doc => doc.id)
       );
+
+      // Create profile lookup
+      const profileMap = new Map();
+      profilesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId) {
+          profileMap.set(data.userId, data);
+        }
+      });
+
+      // Create likes lookup per user
+      const userLikes = new Map<string, number>();
+      contentLikesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId) {
+          userLikes.set(data.userId, (userLikes.get(data.userId) || 0) + 1);
+        }
+      });
 
       // Aggregate user stats
       const userMap = new Map<string, UserStats>();
@@ -99,15 +124,23 @@ export function AdminLeaderboard() {
       downloads.forEach((d: any) => {
         if (!d.userId) return;
         if (!userMap.has(d.userId)) {
+          const profile = profileMap.get(d.userId);
           userMap.set(d.userId, {
             id: d.userId,
             email: d.userEmail || '',
-            displayName: d.userEmail?.split('@')[0] || 'User',
+            displayName: profile?.displayName || d.userName || d.userEmail?.split('@')[0] || 'User',
             verified: verifiedEmails.has(d.userEmail),
             downloadCount: 0,
             messageCount: 0,
             shayariCount: 0,
-            downloads: []
+            likeCount: userLikes.get(d.userId) || 0,
+            followersCount: profile?.followers?.length || 0,
+            followingCount: profile?.following?.length || 0,
+            savedCount: 0,
+            downloads: [],
+            messages: [],
+            shayaris: [],
+            avatar: profile?.avatar
           });
         }
         const user = userMap.get(d.userId)!;
@@ -121,35 +154,63 @@ export function AdminLeaderboard() {
       messages.forEach((m: any) => {
         if (!m.userId) return;
         if (!userMap.has(m.userId)) {
+          const profile = profileMap.get(m.userId);
           userMap.set(m.userId, {
             id: m.userId,
             email: m.userEmail || '',
-            displayName: m.userName || 'User',
+            displayName: profile?.displayName || m.userName || m.userEmail?.split('@')[0] || 'User',
             verified: verifiedEmails.has(m.userEmail),
             downloadCount: 0,
             messageCount: 0,
             shayariCount: 0,
-            downloads: []
+            likeCount: userLikes.get(m.userId) || 0,
+            followersCount: profile?.followers?.length || 0,
+            followingCount: profile?.following?.length || 0,
+            savedCount: 0,
+            downloads: [],
+            messages: [],
+            shayaris: [],
+            avatar: profile?.avatar
           });
         }
-        userMap.get(m.userId)!.messageCount++;
+        const user = userMap.get(m.userId)!;
+        user.messageCount++;
+        user.messages.push({
+          text: m.text || m.message || '',
+          date: m.timestamp || m.createdAt || ''
+        });
       });
 
       shayaris.forEach((s: any) => {
         if (!s.userId) return;
         if (!userMap.has(s.userId)) {
+          const profile = profileMap.get(s.userId);
           userMap.set(s.userId, {
             id: s.userId,
             email: s.userEmail || '',
-            displayName: s.userName || 'User',
+            displayName: profile?.displayName || s.userName || s.userEmail?.split('@')[0] || 'User',
             verified: verifiedEmails.has(s.userEmail),
             downloadCount: 0,
             messageCount: 0,
             shayariCount: 0,
-            downloads: []
+            likeCount: userLikes.get(s.userId) || 0,
+            followersCount: profile?.followers?.length || 0,
+            followingCount: profile?.following?.length || 0,
+            savedCount: 0,
+            downloads: [],
+            messages: [],
+            shayaris: [],
+            avatar: profile?.avatar
           });
         }
-        userMap.get(s.userId)!.shayariCount++;
+        const user = userMap.get(s.userId)!;
+        user.shayariCount++;
+        user.savedCount += s.savedBy?.length || 0;
+        user.shayaris.push({
+          text: s.text || '',
+          date: s.timestamp || s.createdAt || '',
+          likes: s.likes?.length || 0
+        });
       });
 
       setUsers(Array.from(userMap.values()));
@@ -301,15 +362,26 @@ export function AdminLeaderboard() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className={`flex items-center gap-4 p-4 border-2 rounded-lg transition-all cursor-pointer ${bgClass} ${isTop3 ? 'shadow-lg' : ''}`}
-                    onClick={() => setSelectedUser(selectedUser?.id === user.id ? null : user)}
+                    className={`flex items-center gap-4 p-4 border-2 rounded-lg transition-all ${bgClass} ${isTop3 ? 'shadow-lg' : ''}`}
                   >
                     <div className="w-12 flex justify-center">
                       {getIcon(index)}
                     </div>
+                    
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-lg font-bold text-muted-foreground">
+                          {user.displayName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold truncate">{user.displayName}</p>
+                        <p className="font-semibold truncate text-foreground">{user.displayName}</p>
                         {user.verified && (
                           <img src={blueTick} alt="Verified" className="h-4 w-4 object-contain shrink-0" />
                         )}
@@ -334,7 +406,12 @@ export function AdminLeaderboard() {
                         <PenSquare className="h-4 w-4" />
                         <span className="font-bold">{user.shayariCount}</span>
                       </div>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => setSelectedUser(selectedUser?.id === user.id ? null : user)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>
@@ -347,51 +424,161 @@ export function AdminLeaderboard() {
       </Card>
 
       {/* User Details Panel */}
-      {selectedUser && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Card className="border-2 border-primary/30">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  {selectedUser.displayName}'s Activity
-                  {selectedUser.verified && (
-                    <img src={blueTick} alt="Verified" className="h-5 w-5" />
-                  )}
-                </span>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedUser(null)}>
-                  ✕
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="downloads">
-                <TabsList>
-                  <TabsTrigger value="downloads">Downloads ({selectedUser.downloadCount})</TabsTrigger>
-                </TabsList>
-                <TabsContent value="downloads" className="mt-4">
-                  {selectedUser.downloads.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">No downloads</p>
-                  ) : (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {selectedUser.downloads.map((d, i) => (
-                        <div key={i} className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                          <span className="text-sm font-medium">{d.title}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(d.date).toLocaleDateString()}
-                          </span>
+      <AnimatePresence>
+        {selectedUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Card className="border-2 border-primary/30">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Avatar */}
+                    <div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
+                      {selectedUser.avatar ? (
+                        <img src={selectedUser.avatar} alt={selectedUser.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl font-bold text-muted-foreground">
+                          {selectedUser.displayName.charAt(0).toUpperCase()}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+                    <div>
+                      <span className="flex items-center gap-2">
+                        {selectedUser.displayName}
+                        {selectedUser.verified && (
+                          <img src={blueTick} alt="Verified" className="h-5 w-5" />
+                        )}
+                      </span>
+                      <p className="text-sm text-muted-foreground font-normal">{selectedUser.email}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedUser(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Stats Summary */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <Download className="h-5 w-5 mx-auto mb-1 text-blue-500" />
+                    <p className="text-2xl font-bold">{selectedUser.downloadCount}</p>
+                    <p className="text-xs text-muted-foreground">Downloads</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <MessageCircle className="h-5 w-5 mx-auto mb-1 text-green-500" />
+                    <p className="text-2xl font-bold">{selectedUser.messageCount}</p>
+                    <p className="text-xs text-muted-foreground">Messages</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <PenSquare className="h-5 w-5 mx-auto mb-1 text-purple-500" />
+                    <p className="text-2xl font-bold">{selectedUser.shayariCount}</p>
+                    <p className="text-xs text-muted-foreground">Shayaris</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <Heart className="h-5 w-5 mx-auto mb-1 text-red-500" />
+                    <p className="text-2xl font-bold">{selectedUser.likeCount}</p>
+                    <p className="text-xs text-muted-foreground">Likes</p>
+                  </div>
+                </div>
+
+                {/* Social Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <Users className="h-5 w-5 mx-auto mb-1 text-primary" />
+                    <p className="text-xl font-bold">{selectedUser.followersCount}</p>
+                    <p className="text-xs text-muted-foreground">Followers</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <Users className="h-5 w-5 mx-auto mb-1 text-secondary" />
+                    <p className="text-xl font-bold">{selectedUser.followingCount}</p>
+                    <p className="text-xs text-muted-foreground">Following</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <Bookmark className="h-5 w-5 mx-auto mb-1 text-accent" />
+                    <p className="text-xl font-bold">{selectedUser.savedCount}</p>
+                    <p className="text-xs text-muted-foreground">Saves Received</p>
+                  </div>
+                </div>
+
+                {/* Detailed Activity Tabs */}
+                <Tabs defaultValue="downloads">
+                  <TabsList className="w-full grid grid-cols-3">
+                    <TabsTrigger value="downloads">Downloads</TabsTrigger>
+                    <TabsTrigger value="messages">Messages</TabsTrigger>
+                    <TabsTrigger value="shayaris">Shayaris</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="downloads" className="mt-4">
+                    <ScrollArea className="h-60">
+                      {selectedUser.downloads.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">No downloads</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {selectedUser.downloads.map((d, i) => (
+                            <div key={i} className="flex justify-between items-center p-2 bg-muted/30 rounded">
+                              <span className="text-sm font-medium">{d.title}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {d.date ? new Date(d.date).toLocaleDateString() : 'N/A'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </TabsContent>
+
+                  <TabsContent value="messages" className="mt-4">
+                    <ScrollArea className="h-60">
+                      {selectedUser.messages.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">No messages</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {selectedUser.messages.slice(0, 50).map((m, i) => (
+                            <div key={i} className="p-2 bg-muted/30 rounded">
+                              <p className="text-sm line-clamp-2">{m.text}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {m.date ? new Date(m.date).toLocaleDateString() : 'N/A'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </TabsContent>
+
+                  <TabsContent value="shayaris" className="mt-4">
+                    <ScrollArea className="h-60">
+                      {selectedUser.shayaris.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-4">No shayaris</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {selectedUser.shayaris.map((s, i) => (
+                            <div key={i} className="p-2 bg-muted/30 rounded">
+                              <p className="text-sm line-clamp-2">{s.text}</p>
+                              <div className="flex justify-between items-center mt-1">
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Heart className="h-3 w-3" /> {s.likes}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {s.date ? new Date(s.date).toLocaleDateString() : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { QuoteCarousel } from '@/components/Home/QuoteCarousel';
 import { SectionCard } from '@/components/Home/SectionCard';
 import { ChannelPopup } from '@/components/Home/ChannelPopup';
 import { HomePopup } from '@/components/Home/HomePopup';
+import { UserLeaderboard } from '@/components/Home/UserLeaderboard';
 
 import { Package, Film, GraduationCap, Gamepad2, Layers, FolderArchive } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -123,6 +124,11 @@ const Index = () => {
               index={index}
             />
           ))}
+        </div>
+
+        {/* User Leaderboard */}
+        <div className="max-w-md mx-auto">
+          <UserLeaderboard />
         </div>
       </main>
 
