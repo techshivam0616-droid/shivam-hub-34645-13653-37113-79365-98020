@@ -9,6 +9,8 @@ interface NotificationPayload {
   title: string;
   body: string;
   tokens: string[];
+  icon?: string;
+  siteName?: string;
 }
 
 async function getAccessToken(serviceAccount: any): Promise<string> {
@@ -86,9 +88,13 @@ async function sendFCMNotification(
   projectId: string,
   token: string,
   title: string,
-  body: string
+  body: string,
+  icon?: string
 ): Promise<{ success: boolean; token: string; error?: string }> {
   try {
+    const defaultIcon = 'https://i.postimg.cc/Y9CH9XBQ/IMG-20251112-091800-841.jpg';
+    const notificationIcon = icon || defaultIcon;
+
     const response = await fetch(
       `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
       {
@@ -104,12 +110,57 @@ async function sendFCMNotification(
               title: title,
               body: body,
             },
-            webpush: {
-              notification: {
-                icon: "/favicon.ico",
-                badge: "/favicon.ico",
-              },
+            data: {
+              title: title,
+              body: body,
+              icon: notificationIcon,
+              badge: notificationIcon,
+              click_action: "OPEN_APP",
             },
+            webpush: {
+              headers: {
+                "Urgency": "high",
+                "TTL": "0"
+              },
+              notification: {
+                title: title,
+                body: body,
+                icon: notificationIcon,
+                badge: notificationIcon,
+                vibrate: [200, 100, 200],
+                tag: "ts-hub-notification",
+                renotify: true,
+                requireInteraction: false
+              },
+              fcm_options: {
+                link: "/"
+              }
+            },
+            android: {
+              priority: "high",
+              ttl: "0s",
+              notification: {
+                icon: "notification_icon",
+                color: "#8B5CF6",
+                channel_id: "high_priority"
+              }
+            },
+            apns: {
+              headers: {
+                "apns-priority": "10",
+                "apns-push-type": "alert"
+              },
+              payload: {
+                aps: {
+                  alert: {
+                    title: title,
+                    body: body
+                  },
+                  sound: "default",
+                  badge: 1
+                }
+              }
+            }
           },
         }),
       }
@@ -148,7 +199,7 @@ serve(async (req) => {
       throw new Error("Invalid service account: missing project_id");
     }
 
-    const { title, body, tokens }: NotificationPayload = await req.json();
+    const { title, body, tokens, icon }: NotificationPayload = await req.json();
 
     if (!title || !body || !tokens || tokens.length === 0) {
       return new Response(
@@ -157,17 +208,18 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending notification to ${tokens.length} devices...`);
+    console.log(`Sending HIGH PRIORITY notification to ${tokens.length} devices...`);
     console.log(`Title: ${title}`);
     console.log(`Body: ${body}`);
+    console.log(`Icon: ${icon || 'default'}`);
 
     // Get access token
     const accessToken = await getAccessToken(serviceAccount);
     console.log("Successfully obtained access token");
 
-    // Send to all tokens in parallel
+    // Send to all tokens in parallel for faster delivery
     const results = await Promise.all(
-      tokens.map(token => sendFCMNotification(accessToken, projectId, token, title, body))
+      tokens.map(token => sendFCMNotification(accessToken, projectId, token, title, body, icon))
     );
 
     const successful = results.filter(r => r.success).length;

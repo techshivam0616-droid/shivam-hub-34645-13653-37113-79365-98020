@@ -71,6 +71,7 @@ const Admin = () => {
             <TabsTrigger value="feedback" className="whitespace-nowrap text-sm">Feedback</TabsTrigger>
             <TabsTrigger value="shayaris" className="whitespace-nowrap text-sm">Shayaris</TabsTrigger>
             <TabsTrigger value="push-notifications" className="whitespace-nowrap text-sm">Push Notifications</TabsTrigger>
+            <TabsTrigger value="avatars" className="whitespace-nowrap text-sm">Avatars</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -159,6 +160,10 @@ const Admin = () => {
 
           <TabsContent value="push-notifications">
             <AdminPushNotifications />
+          </TabsContent>
+
+          <TabsContent value="avatars">
+            <AdminAvatars />
           </TabsContent>
         </Tabs>
 

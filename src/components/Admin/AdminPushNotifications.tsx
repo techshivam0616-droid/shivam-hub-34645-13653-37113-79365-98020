@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ref, get, child } from 'firebase/database';
 import { realtimeDb } from '@/lib/firebase';
 import { supabase } from '@/integrations/supabase/client';
+import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +19,7 @@ interface TokenData {
 }
 
 export default function AdminPushNotifications() {
+  const { settings } = useWebsiteSettings();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
@@ -69,12 +71,14 @@ export default function AdminPushNotifications() {
     setLoading(true);
 
     try {
-      // Call the Edge Function to send FCM notifications
+      // Call the Edge Function to send FCM notifications with website logo
       const { data, error } = await supabase.functions.invoke('send-push-notification', {
         body: {
           title,
           body,
           tokens: tokenList,
+          icon: settings.logoUrl,
+          siteName: settings.siteName,
         },
       });
 

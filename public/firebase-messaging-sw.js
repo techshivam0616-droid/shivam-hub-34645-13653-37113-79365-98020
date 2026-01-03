@@ -17,16 +17,23 @@ firebase.initializeApp(firebaseConfig);
 
 const messaging = firebase.messaging();
 
+// Default icon - will be overridden by the notification payload if provided
+const DEFAULT_ICON = 'https://i.postimg.cc/Y9CH9XBQ/IMG-20251112-091800-841.jpg';
+const DEFAULT_BADGE = 'https://i.postimg.cc/Y9CH9XBQ/IMG-20251112-091800-841.jpg';
+
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
   
-  const notificationTitle = payload.notification?.title || 'New Notification';
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'TS HUB';
   const notificationOptions = {
-    body: payload.notification?.body || '',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
-    vibrate: [100, 50, 100],
+    body: payload.notification?.body || payload.data?.body || '',
+    icon: payload.data?.icon || DEFAULT_ICON,
+    badge: payload.data?.badge || DEFAULT_BADGE,
+    vibrate: [200, 100, 200],
+    tag: 'ts-hub-notification',
+    renotify: true,
+    requireInteraction: false,
     data: payload.data,
     actions: [
       { action: 'open', title: 'Open' },
