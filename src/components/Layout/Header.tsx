@@ -25,7 +25,6 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
               onClick={() => setShowNav(true)}
             >
               <Menu className="h-5 w-5" />

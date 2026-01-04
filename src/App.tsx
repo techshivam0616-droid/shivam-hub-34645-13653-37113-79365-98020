@@ -28,6 +28,7 @@ import LiveChat from "./pages/LiveChat";
 import BlueTickPurchase from "./pages/BlueTickPurchase";
 import Social from "./pages/Social";
 import ItemDetails from "./pages/ItemDetails";
+import Leaderboard from "./pages/Leaderboard";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const AppContent = () => {
           <Route path="/live-chat" element={<LiveChat />} />
           <Route path="/buy-bluetick" element={<BlueTickPurchase />} />
           <Route path="/social" element={<Social />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/item/:type/:id" element={<ItemDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

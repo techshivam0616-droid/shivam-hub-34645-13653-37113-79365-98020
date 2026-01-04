@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { AuthDialog } from '@/components/Auth/AuthDialog';
 
 export default function ItemDetails() {
   const { type, id } = useParams();
@@ -22,26 +23,70 @@ export default function ItemDetails() {
   const { isVerified } = useVerification();
   const { settings } = useWebsiteSettings();
   const [showDownload, setShowDownload] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-
-  // Get item from location state
-  const item = location.state?.item;
+  const [item, setItem] = useState<any>(location.state?.item || null);
+  const [loading, setLoading] = useState(!location.state?.item);
 
   useEffect(() => {
-    if (!item) {
-      navigate('/');
-    } else {
-      setLikeCount(item.likes || 0);
-      // Check like status
-      if (user && item.id) {
-        const likeRef = doc(db, 'content_likes', `${user.uid}_${item.id}`);
-        getDoc(likeRef).then((snap) => {
-          if (snap.exists()) setLiked(true);
-        });
+    const fetchItem = async () => {
+      // If item is passed via state, use it
+      if (location.state?.item) {
+        setItem(location.state.item);
+        setLikeCount(location.state.item.likes || 0);
+        setLoading(false);
+        return;
       }
+
+      // Otherwise, fetch from Firebase using type and id
+      if (type && id) {
+        try {
+        const itemDoc = await getDoc(doc(db, type, id));
+          if (itemDoc.exists()) {
+            const data = itemDoc.data();
+            const fetchedItem = { id: itemDoc.id, ...data };
+            setItem(fetchedItem);
+            setLikeCount(data.likes || 0);
+          } else {
+            toast.error('Item not found');
+            navigate('/');
+          }
+        } catch (error) {
+          console.error('Error fetching item:', error);
+          toast.error('Failed to load item');
+          navigate('/');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        navigate('/');
+      }
+    };
+
+    fetchItem();
+  }, [type, id, location.state, navigate]);
+
+  // Check like status when user or item changes
+  useEffect(() => {
+    if (user && item?.id) {
+      const likeRef = doc(db, 'content_likes', `${user.uid}_${item.id}`);
+      getDoc(likeRef).then((snap) => {
+        if (snap.exists()) setLiked(true);
+      });
     }
-  }, [item, navigate, user]);
+  }, [user, item]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!item) {
     return null;
@@ -57,6 +102,11 @@ export default function ItemDetails() {
     (Date.now() - new Date(item.updatedAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
   const handleDownloadClick = () => {
+    // Check if user is logged in first
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
     if (isPremium && !isVerified) {
       navigate('/buy-bluetick');
       return;
@@ -300,6 +350,17 @@ export default function ItemDetails() {
         onOpenChange={setShowDownload}
         item={item}
         type={type || 'item'}
+      />
+
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={(isOpen) => {
+          setShowAuth(isOpen);
+          if (!isOpen && user) {
+            // After login, open download dialog
+            setTimeout(() => setShowDownload(true), 300);
+          }
+        }} 
       />
     </div>
   );
