@@ -4,13 +4,25 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { collection, getDocs, query, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, doc, setDoc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Trophy, Medal, Award, Calendar, Download, MessageCircle, PenSquare, Search, Eye, X, Heart, Users, Bookmark } from 'lucide-react';
+import { Trophy, Medal, Award, Calendar, Download, MessageCircle, PenSquare, Search, Eye, X, Heart, Users, Bookmark, RotateCcw, Crown, History } from 'lucide-react';
 import blueTick from '@/assets/blue-tick.png';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface UserStats {
   id: string;
@@ -28,6 +40,18 @@ interface UserStats {
   messages: { text: string; date: string }[];
   shayaris: { text: string; date: string; likes: number }[];
   avatar?: string;
+  badges?: string[];
+}
+
+interface WeeklyWinner {
+  id: string;
+  weekKey: string;
+  userId: string;
+  displayName: string;
+  avatar?: string;
+  rank: number;
+  downloadCount: number;
+  awardedAt: string;
 }
 
 export function AdminLeaderboard() {
@@ -37,10 +61,15 @@ export function AdminLeaderboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'downloads' | 'messages' | 'shayaris'>('downloads');
   const [selectedUser, setSelectedUser] = useState<UserStats | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [pastWinners, setPastWinners] = useState<WeeklyWinner[]>([]);
+  const [userBadges, setUserBadges] = useState<Map<string, string[]>>(new Map());
 
   useEffect(() => {
     checkAndResetWeekly();
     fetchAllStats();
+    fetchPastWinners();
+    fetchUserBadges();
   }, []);
 
   const getWeekKey = () => {
@@ -76,6 +105,122 @@ export function AdminLeaderboard() {
     } catch (error) {
       console.error('Error checking weekly reset:', error);
     }
+  };
+
+  const fetchPastWinners = async () => {
+    try {
+      const winnersSnapshot = await getDocs(collection(db, 'weekly_winners'));
+      const winners = winnersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as WeeklyWinner[];
+      
+      // Sort by date descending
+      winners.sort((a, b) => new Date(b.awardedAt).getTime() - new Date(a.awardedAt).getTime());
+      setPastWinners(winners);
+    } catch (error) {
+      console.error('Error fetching past winners:', error);
+    }
+  };
+
+  const fetchUserBadges = async () => {
+    try {
+      const badgesSnapshot = await getDocs(collection(db, 'user_badges'));
+      const badges = new Map<string, string[]>();
+      
+      badgesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId) {
+          const existing = badges.get(data.userId) || [];
+          existing.push(data.badge);
+          badges.set(data.userId, existing);
+        }
+      });
+      
+      setUserBadges(badges);
+    } catch (error) {
+      console.error('Error fetching user badges:', error);
+    }
+  };
+
+  const awardBadgeToUser = async (userId: string, badge: string, displayName: string) => {
+    try {
+      await addDoc(collection(db, 'user_badges'), {
+        userId,
+        badge,
+        displayName,
+        awardedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error awarding badge:', error);
+    }
+  };
+
+  const resetWeeklyLeaderboard = async () => {
+    setResetting(true);
+    try {
+      // Get top 3 users by downloads
+      const top3 = [...users]
+        .sort((a, b) => b.downloadCount - a.downloadCount)
+        .slice(0, 3);
+
+      if (top3.length === 0) {
+        toast.error('No users to award');
+        setResetting(false);
+        return;
+      }
+
+      const currentWeek = getWeekKey();
+      const badges = ['🥇 Weekly Champion', '🥈 Weekly Runner-up', '🥉 Weekly Third'];
+
+      // Award badges and save to weekly_winners
+      for (let i = 0; i < top3.length; i++) {
+        const user = top3[i];
+        
+        // Save to weekly_winners collection
+        await addDoc(collection(db, 'weekly_winners'), {
+          weekKey: currentWeek,
+          userId: user.id,
+          displayName: user.displayName,
+          avatar: user.avatar || null,
+          rank: i + 1,
+          downloadCount: user.downloadCount,
+          awardedAt: new Date().toISOString()
+        });
+
+        // Award badge to user
+        await awardBadgeToUser(user.id, badges[i], user.displayName);
+      }
+
+      // Update leaderboard meta with new week
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      const nextWeekKey = nextWeek.toISOString().split('T')[0];
+      
+      await setDoc(doc(db, 'leaderboard_meta', 'current_week'), {
+        weekKey: nextWeekKey,
+        startedAt: new Date().toISOString(),
+        lastResetAt: new Date().toISOString()
+      });
+
+      toast.success(`Awarded badges to top 3 users: ${top3.map(u => u.displayName).join(', ')}`);
+      
+      // Refresh data
+      fetchPastWinners();
+      fetchUserBadges();
+    } catch (error) {
+      console.error('Error resetting leaderboard:', error);
+      toast.error('Failed to reset leaderboard');
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const getBadgeIcon = (badge: string) => {
+    if (badge.includes('Champion')) return <Crown className="h-3 w-3 text-yellow-500" />;
+    if (badge.includes('Runner-up')) return <Medal className="h-3 w-3 text-gray-400" />;
+    if (badge.includes('Third')) return <Award className="h-3 w-3 text-orange-600" />;
+    return <Trophy className="h-3 w-3 text-primary" />;
   };
 
   const fetchAllStats = async () => {
@@ -297,6 +442,105 @@ export function AdminLeaderboard() {
         </motion.div>
       </div>
 
+      {/* Weekly Reset Control */}
+      <Card className="border-2 border-yellow-500/30 bg-gradient-to-r from-yellow-500/5 to-orange-500/5">
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-yellow-500" />
+                Weekly Reset & Badges
+              </CardTitle>
+              <CardDescription>
+                Award badges to top 3 users and reset the weekly leaderboard
+              </CardDescription>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="default" className="bg-yellow-500 hover:bg-yellow-600 text-black" disabled={resetting}>
+                  {resetting ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-black border-r-transparent mr-2" />
+                  ) : (
+                    <Crown className="h-4 w-4 mr-2" />
+                  )}
+                  Award Badges & Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset Weekly Leaderboard?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will award badges to the current top 3 users:
+                    <ul className="mt-2 space-y-1">
+                      {users.sort((a, b) => b.downloadCount - a.downloadCount).slice(0, 3).map((u, i) => (
+                        <li key={u.id} className="flex items-center gap-2">
+                          {i === 0 && '🥇'}
+                          {i === 1 && '🥈'}
+                          {i === 2 && '🥉'}
+                          <span className="font-medium">{u.displayName}</span>
+                          <span className="text-muted-foreground">({u.downloadCount} downloads)</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={resetWeeklyLeaderboard} className="bg-yellow-500 hover:bg-yellow-600 text-black">
+                    Confirm & Award
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Past Winners */}
+      {pastWinners.length > 0 && (
+        <Card className="border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              Past Weekly Winners
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-48">
+              <div className="space-y-2">
+                {pastWinners.slice(0, 15).map((winner) => (
+                  <div key={winner.id} className="flex items-center gap-3 p-2 bg-muted/30 rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
+                      {winner.avatar ? (
+                        <img src={winner.avatar} alt={winner.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-sm font-bold text-muted-foreground">
+                          {winner.displayName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {winner.rank === 1 && <Crown className="h-4 w-4 text-yellow-500" />}
+                        {winner.rank === 2 && <Medal className="h-4 w-4 text-gray-400" />}
+                        {winner.rank === 3 && <Award className="h-4 w-4 text-orange-600" />}
+                        <span className="font-medium text-sm">{winner.displayName}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Week of {winner.weekKey} • {winner.downloadCount} downloads
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      #{winner.rank}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Leaderboard */}
       <Card className="border-2 border-primary/20">
         <CardHeader>
@@ -348,6 +592,7 @@ export function AdminLeaderboard() {
             <div className="space-y-3">
               {sortedUsers.map((user, index) => {
                 const isTop3 = index < 3;
+                const badges = userBadges.get(user.id) || [];
                 const bgClass = isTop3 
                   ? index === 0 
                     ? 'bg-gradient-to-r from-yellow-500/10 to-yellow-600/10 border-yellow-500/50' 
@@ -380,7 +625,7 @@ export function AdminLeaderboard() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold truncate text-foreground">{user.displayName}</p>
                         {user.verified && (
                           <img src={blueTick} alt="Verified" className="h-4 w-4 object-contain shrink-0" />
@@ -389,6 +634,16 @@ export function AdminLeaderboard() {
                           <Badge variant={index === 0 ? 'default' : 'secondary'} className="animate-pulse shrink-0">
                             TOP {index + 1}
                           </Badge>
+                        )}
+                        {/* User badges */}
+                        {badges.slice(0, 3).map((badge, i) => (
+                          <Badge key={i} variant="outline" className="text-xs flex items-center gap-1 shrink-0">
+                            {getBadgeIcon(badge)}
+                            <span className="hidden md:inline">{badge.replace(/🥇|🥈|🥉/g, '').trim()}</span>
+                          </Badge>
+                        ))}
+                        {badges.length > 3 && (
+                          <Badge variant="outline" className="text-xs">+{badges.length - 3}</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>

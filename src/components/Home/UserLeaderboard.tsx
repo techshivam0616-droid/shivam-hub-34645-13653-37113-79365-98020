@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Trophy, Medal, Award, Download } from 'lucide-react';
+import { Trophy, Medal, Award, Download, Crown } from 'lucide-react';
 import blueTick from '@/assets/blue-tick.png';
 import { motion } from 'framer-motion';
 
@@ -12,6 +13,7 @@ interface LeaderboardUser {
   downloadCount: number;
   verified: boolean;
   avatar?: string;
+  badges?: string[];
 }
 
 export function UserLeaderboard() {
@@ -24,10 +26,11 @@ export function UserLeaderboard() {
 
   const fetchLeaderboard = async () => {
     try {
-      const [downloadsSnapshot, verifiedUsersSnapshot, profilesSnapshot] = await Promise.all([
+      const [downloadsSnapshot, verifiedUsersSnapshot, profilesSnapshot, badgesSnapshot] = await Promise.all([
         getDocs(collection(db, 'downloads')),
         getDocs(collection(db, 'verified_users')),
-        getDocs(collection(db, 'user_profiles'))
+        getDocs(collection(db, 'user_profiles')),
+        getDocs(collection(db, 'user_badges'))
       ]);
 
       const verifiedEmails = new Set(
@@ -44,6 +47,17 @@ export function UserLeaderboard() {
         }
       });
 
+      // Build badges map
+      const badgesMap = new Map<string, string[]>();
+      badgesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId) {
+          const existing = badgesMap.get(data.userId) || [];
+          existing.push(data.badge);
+          badgesMap.set(data.userId, existing);
+        }
+      });
+
       const userMap = new Map<string, LeaderboardUser>();
 
       downloadsSnapshot.docs.forEach((doc) => {
@@ -57,7 +71,8 @@ export function UserLeaderboard() {
             displayName: profile?.displayName || d.userName || d.userEmail?.split('@')[0] || 'User',
             downloadCount: 0,
             verified: verifiedEmails.has(d.userEmail),
-            avatar: profile?.avatar
+            avatar: profile?.avatar,
+            badges: badgesMap.get(d.userId) || []
           });
         }
         userMap.get(d.userId)!.downloadCount++;
@@ -80,6 +95,13 @@ export function UserLeaderboard() {
     if (index === 1) return <Medal className="h-5 w-5 text-gray-400" />;
     if (index === 2) return <Award className="h-5 w-5 text-orange-600" />;
     return <span className="text-muted-foreground font-bold text-sm">#{index + 1}</span>;
+  };
+
+  const getBadgeIcon = (badge: string) => {
+    if (badge.includes('Champion')) return <Crown className="h-3 w-3 text-yellow-500" />;
+    if (badge.includes('Runner-up')) return <Medal className="h-3 w-3 text-gray-400" />;
+    if (badge.includes('Third')) return <Award className="h-3 w-3 text-orange-600" />;
+    return <Trophy className="h-3 w-3 text-primary" />;
   };
 
   if (loading) {
@@ -135,10 +157,17 @@ export function UserLeaderboard() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium text-sm truncate">{user.displayName}</span>
                     {user.verified && (
                       <img src={blueTick} alt="Verified" className="h-3.5 w-3.5 object-contain flex-shrink-0" />
+                    )}
+                    {/* Show badges */}
+                    {user.badges && user.badges.length > 0 && (
+                      <Badge variant="outline" className="text-[10px] h-5 flex items-center gap-1 px-1.5">
+                        {getBadgeIcon(user.badges[0])}
+                        <span className="hidden sm:inline">{user.badges.length}x</span>
+                      </Badge>
                     )}
                   </div>
                 </div>
