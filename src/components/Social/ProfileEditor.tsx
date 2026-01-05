@@ -8,23 +8,38 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { User, Save, Sparkles } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { User, Save, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { maleAvatars, femaleAvatars, getAvatarById } from './avatars';
 
 interface ProfileData {
   displayName: string;
+  username: string;
   bio: string;
   avatar: string;
+  whatsappNumber: string;
+  telegramUsername: string;
+  instagramId: string;
+  hideWhatsapp: boolean;
+  hideTelegram: boolean;
+  hideInstagram: boolean;
 }
 
 export function ProfileEditor() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<ProfileData>({
     displayName: '',
+    username: '',
     bio: '',
-    avatar: ''
+    avatar: '',
+    whatsappNumber: '',
+    telegramUsername: '',
+    instagramId: '',
+    hideWhatsapp: false,
+    hideTelegram: false,
+    hideInstagram: false
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,14 +60,28 @@ export function ProfileEditor() {
         const data = profileDoc.data();
         setProfile({
           displayName: data.displayName || user.displayName || '',
+          username: data.username || '',
           bio: data.bio || '',
-          avatar: data.avatar || ''
+          avatar: data.avatar || '',
+          whatsappNumber: data.whatsappNumber || '',
+          telegramUsername: data.telegramUsername || '',
+          instagramId: data.instagramId || '',
+          hideWhatsapp: data.hideWhatsapp || false,
+          hideTelegram: data.hideTelegram || false,
+          hideInstagram: data.hideInstagram || false
         });
       } else {
         setProfile({
           displayName: user.displayName || user.email?.split('@')[0] || '',
+          username: '',
           bio: '',
-          avatar: ''
+          avatar: '',
+          whatsappNumber: '',
+          telegramUsername: '',
+          instagramId: '',
+          hideWhatsapp: false,
+          hideTelegram: false,
+          hideInstagram: false
         });
       }
     } catch (error) {
@@ -69,13 +98,20 @@ export function ProfileEditor() {
     try {
       await setDoc(doc(db, 'user_profiles', user.uid), {
         displayName: profile.displayName,
+        username: profile.username,
         bio: profile.bio,
         avatar: profile.avatar,
+        whatsappNumber: profile.whatsappNumber,
+        telegramUsername: profile.telegramUsername,
+        instagramId: profile.instagramId,
+        hideWhatsapp: profile.hideWhatsapp,
+        hideTelegram: profile.hideTelegram,
+        hideInstagram: profile.hideInstagram,
         email: user.email,
         updatedAt: new Date().toISOString()
       }, { merge: true });
       
-      toast.success('Profile saved! ✨');
+      toast.success('Profile saved!');
     } catch (error) {
       toast.error('Failed to save profile');
     } finally {
@@ -195,6 +231,17 @@ export function ProfileEditor() {
           />
         </div>
 
+        {/* Username Input */}
+        <div className="space-y-2">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            value={profile.username}
+            onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+            placeholder="Enter username (e.g., @cooluser)"
+          />
+        </div>
+
         {/* Bio Input */}
         <div className="space-y-2">
           <Label htmlFor="bio">Bio</Label>
@@ -204,6 +251,69 @@ export function ProfileEditor() {
             onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
             placeholder="Tell us about yourself..."
             rows={3}
+          />
+        </div>
+
+        {/* WhatsApp Number */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+            <div className="flex items-center gap-2 text-sm">
+              {profile.hideWhatsapp ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Switch
+                checked={profile.hideWhatsapp}
+                onCheckedChange={(checked) => setProfile({ ...profile, hideWhatsapp: checked })}
+              />
+              <span className="text-muted-foreground">Hide</span>
+            </div>
+          </div>
+          <Input
+            id="whatsappNumber"
+            value={profile.whatsappNumber}
+            onChange={(e) => setProfile({ ...profile, whatsappNumber: e.target.value })}
+            placeholder="+91 9876543210"
+          />
+        </div>
+
+        {/* Telegram Username */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="telegramUsername">Telegram</Label>
+            <div className="flex items-center gap-2 text-sm">
+              {profile.hideTelegram ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Switch
+                checked={profile.hideTelegram}
+                onCheckedChange={(checked) => setProfile({ ...profile, hideTelegram: checked })}
+              />
+              <span className="text-muted-foreground">Hide</span>
+            </div>
+          </div>
+          <Input
+            id="telegramUsername"
+            value={profile.telegramUsername}
+            onChange={(e) => setProfile({ ...profile, telegramUsername: e.target.value })}
+            placeholder="@username or phone number"
+          />
+        </div>
+
+        {/* Instagram ID */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="instagramId">Instagram</Label>
+            <div className="flex items-center gap-2 text-sm">
+              {profile.hideInstagram ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Switch
+                checked={profile.hideInstagram}
+                onCheckedChange={(checked) => setProfile({ ...profile, hideInstagram: checked })}
+              />
+              <span className="text-muted-foreground">Hide</span>
+            </div>
+          </div>
+          <Input
+            id="instagramId"
+            value={profile.instagramId}
+            onChange={(e) => setProfile({ ...profile, instagramId: e.target.value })}
+            placeholder="@instagram_handle"
           />
         </div>
 

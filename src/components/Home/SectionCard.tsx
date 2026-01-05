@@ -88,7 +88,7 @@ export function SectionCard({ icon: Icon, title, description, path, index, exter
               <Icon className="h-10 w-10 text-white relative z-10 drop-shadow-2xl" />
             </motion.div>
             <CardTitle className="text-3xl gradient-text font-bold mb-2">{title}</CardTitle>
-            <CardDescription className="text-base text-muted-foreground leading-relaxed">
+            <CardDescription className="text-base text-foreground/70 leading-relaxed">
               {description}
             </CardDescription>
           </CardHeader>
