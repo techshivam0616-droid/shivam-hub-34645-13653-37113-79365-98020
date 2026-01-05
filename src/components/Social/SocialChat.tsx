@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { Send, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Send, X, User } from 'lucide-react';
+import { FaWhatsapp, FaTelegram, FaInstagram } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import blueTick from '@/assets/blue-tick.png';
@@ -23,6 +25,21 @@ interface Message {
   timestamp: number;
 }
 
+interface UserProfile {
+  displayName: string;
+  username: string;
+  bio: string;
+  avatar: string;
+  email: string;
+  whatsappNumber: string;
+  telegramUsername: string;
+  instagramId: string;
+  hideWhatsapp: boolean;
+  hideTelegram: boolean;
+  hideInstagram: boolean;
+  isVerified: boolean;
+}
+
 interface SocialChatProps {
   isOpen: boolean;
   onClose: () => void;
@@ -34,6 +51,8 @@ export function SocialChat({ isOpen, onClose }: SocialChatProps) {
   const [newMessage, setNewMessage] = useState('');
   const [verifiedUsers, setVerifiedUsers] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -117,7 +136,40 @@ export function SocialChat({ isOpen, onClose }: SocialChatProps) {
     }
   };
 
+  const viewUserProfile = async (userId: string, userEmail: string) => {
+    setProfileLoading(true);
+    try {
+      const profileDoc = await getDoc(doc(db, 'user_profiles', userId));
+      if (profileDoc.exists()) {
+        const data = profileDoc.data();
+        const isVerified = verifiedUsers.has(userEmail);
+        setSelectedProfile({
+          displayName: data.displayName || 'User',
+          username: data.username || '',
+          bio: data.bio || '',
+          avatar: data.avatar || '',
+          email: userEmail,
+          whatsappNumber: data.hideWhatsapp ? '' : (data.whatsappNumber || ''),
+          telegramUsername: data.hideTelegram ? '' : (data.telegramUsername || ''),
+          instagramId: data.hideInstagram ? '' : (data.instagramId || ''),
+          hideWhatsapp: data.hideWhatsapp || false,
+          hideTelegram: data.hideTelegram || false,
+          hideInstagram: data.hideInstagram || false,
+          isVerified
+        });
+      } else {
+        toast.error('Profile not found');
+      }
+    } catch (error) {
+      toast.error('Failed to load profile');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
+
+  const avatarData = selectedProfile?.avatar ? getAvatarById(selectedProfile.avatar) : null;
 
   return (
     <AnimatePresence>
@@ -148,7 +200,7 @@ export function SocialChat({ isOpen, onClose }: SocialChatProps) {
               {messages.map((message) => {
                 const isOwn = message.userId === user?.uid;
                 const isVerified = verifiedUsers.has(message.userEmail);
-                const avatarData = message.userAvatar ? getAvatarById(message.userAvatar) : null;
+                const msgAvatarData = message.userAvatar ? getAvatarById(message.userAvatar) : null;
 
                 return (
                   <motion.div
@@ -157,20 +209,28 @@ export function SocialChat({ isOpen, onClose }: SocialChatProps) {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : ''}`}
                   >
-                    <Avatar className={`h-8 w-8 flex-shrink-0 ring-2 ${isVerified ? 'ring-blue-500' : 'ring-border'}`}>
-                      {avatarData ? (
-                        <AvatarImage src={avatarData.url} />
-                      ) : (
-                        <AvatarFallback className={isVerified ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs' : 'text-xs'}>
-                          {message.userName.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+                    <button
+                      onClick={() => viewUserProfile(message.userId, message.userEmail)}
+                      className="focus:outline-none"
+                    >
+                      <Avatar className={`h-8 w-8 flex-shrink-0 ring-2 ${isVerified ? 'ring-blue-500' : 'ring-border'} hover:ring-primary transition-all cursor-pointer`}>
+                        {msgAvatarData ? (
+                          <AvatarImage src={msgAvatarData.url} />
+                        ) : (
+                          <AvatarFallback className={isVerified ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs' : 'text-xs'}>
+                            {message.userName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    </button>
                     <div className={`flex flex-col ${isOwn ? 'items-end' : ''}`}>
-                      <div className="flex items-center gap-1 mb-1">
+                      <button 
+                        onClick={() => viewUserProfile(message.userId, message.userEmail)}
+                        className="flex items-center gap-1 mb-1 hover:underline cursor-pointer"
+                      >
                         <span className="text-xs font-semibold">{message.userName}</span>
                         {isVerified && <img src={blueTick} alt="Verified" className="h-3 w-3" />}
-                      </div>
+                      </button>
                       <Card className={`px-3 py-2 max-w-[70vw] ${isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                         <p className="text-sm break-words">{message.text}</p>
                       </Card>
@@ -202,6 +262,81 @@ export function SocialChat({ isOpen, onClose }: SocialChatProps) {
           </div>
         </div>
       </motion.div>
+
+      {/* User Profile Sheet */}
+      <Sheet open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
+        <SheetContent side="bottom" className="h-[70vh]">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              User Profile
+            </SheetTitle>
+          </SheetHeader>
+          
+          {profileLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+            </div>
+          ) : selectedProfile && (
+            <div className="mt-6 space-y-6">
+              {/* Avatar and Name */}
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-24 w-24 ring-4 ring-primary">
+                  {avatarData ? (
+                    <AvatarImage src={avatarData.url} />
+                  ) : (
+                    <AvatarFallback className="text-2xl bg-primary/20">
+                      {selectedProfile.displayName.charAt(0)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <h3 className="text-xl font-bold">{selectedProfile.displayName}</h3>
+                    {selectedProfile.isVerified && <img src={blueTick} alt="Verified" className="h-5 w-5" />}
+                  </div>
+                  {selectedProfile.username && (
+                    <p className="text-primary">@{selectedProfile.username}</p>
+                  )}
+                  {selectedProfile.bio && (
+                    <p className="text-muted-foreground mt-2">{selectedProfile.bio}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Info */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">Contact</h4>
+                
+                {selectedProfile.whatsappNumber && (
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <FaWhatsapp className="h-5 w-5 text-green-500" />
+                    <span>{selectedProfile.whatsappNumber}</span>
+                  </div>
+                )}
+                
+                {selectedProfile.telegramUsername && (
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <FaTelegram className="h-5 w-5 text-blue-500" />
+                    <span>{selectedProfile.telegramUsername}</span>
+                  </div>
+                )}
+                
+                {selectedProfile.instagramId && (
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <FaInstagram className="h-5 w-5 text-pink-500" />
+                    <span>{selectedProfile.instagramId}</span>
+                  </div>
+                )}
+
+                {!selectedProfile.whatsappNumber && !selectedProfile.telegramUsername && !selectedProfile.instagramId && (
+                  <p className="text-muted-foreground text-center py-4">No contact info available</p>
+                )}
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </AnimatePresence>
   );
 }

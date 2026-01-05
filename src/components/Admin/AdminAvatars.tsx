@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Plus, Trash2, Users, Image, Eye, Heart, MessageCircle, UserCheck } from 'lucide-react';
+import { Plus, Trash2, Users, Image, Eye, Heart, MessageCircle, UserCheck, EyeOff, Phone } from 'lucide-react';
+import { FaWhatsapp, FaTelegram, FaInstagram } from 'react-icons/fa';
 import blueTick from '@/assets/blue-tick.png';
 
 interface CustomAvatar {
@@ -26,9 +27,16 @@ interface CustomAvatar {
 interface UserProfileData {
   id: string;
   displayName: string;
+  username: string;
   email: string;
   bio: string;
   avatar: string;
+  whatsappNumber: string;
+  telegramUsername: string;
+  instagramId: string;
+  hideWhatsapp: boolean;
+  hideTelegram: boolean;
+  hideInstagram: boolean;
   createdAt: any;
   postsCount: number;
   followersCount: number;
@@ -88,9 +96,16 @@ export function AdminAvatars() {
         usersData.push({
           id: userId,
           displayName: data.displayName || 'User',
+          username: data.username || '',
           email: data.email || '',
           bio: data.bio || '',
           avatar: data.avatar || '',
+          whatsappNumber: data.whatsappNumber || '',
+          telegramUsername: data.telegramUsername || '',
+          instagramId: data.instagramId || '',
+          hideWhatsapp: data.hideWhatsapp || false,
+          hideTelegram: data.hideTelegram || false,
+          hideInstagram: data.hideInstagram || false,
           createdAt: data.createdAt,
           postsCount: postsSnap.size,
           followersCount: followersSnap.size,
@@ -294,7 +309,7 @@ export function AdminAvatars() {
                 <Users className="h-5 w-5" />
                 All Users ({users.length})
               </CardTitle>
-              <CardDescription>View all user profiles, posts, followers, and following data</CardDescription>
+              <CardDescription>View all user profiles with contact info (hidden fields shown with icon)</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[600px]">
@@ -302,10 +317,8 @@ export function AdminAvatars() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="text-center">Posts</TableHead>
-                      <TableHead className="text-center">Followers</TableHead>
-                      <TableHead className="text-center">Following</TableHead>
+                      <TableHead>Contact Info</TableHead>
+                      <TableHead className="text-center">Stats</TableHead>
                       <TableHead className="text-center">Verified</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -326,30 +339,59 @@ export function AdminAvatars() {
                                 <span className="font-medium">{user.displayName}</span>
                                 {user.isVerified && <img src={blueTick} alt="Verified" className="h-4 w-4" />}
                               </div>
+                              {user.username && (
+                                <p className="text-xs text-primary">@{user.username}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
                               {user.bio && (
                                 <p className="text-xs text-muted-foreground truncate max-w-[200px]">{user.bio}</p>
                               )}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary" className="gap-1">
-                            <MessageCircle className="h-3 w-3" />
-                            {user.postsCount}
-                          </Badge>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {user.whatsappNumber && (
+                              <div className="flex items-center gap-2 text-xs">
+                                <FaWhatsapp className="h-4 w-4 text-green-500" />
+                                <span>{user.whatsappNumber}</span>
+                                {user.hideWhatsapp && <span className="text-orange-500" title="Hidden"><EyeOff className="h-3 w-3" /></span>}
+                              </div>
+                            )}
+                            {user.telegramUsername && (
+                              <div className="flex items-center gap-2 text-xs">
+                                <FaTelegram className="h-4 w-4 text-blue-500" />
+                                <span>{user.telegramUsername}</span>
+                                {user.hideTelegram && <span className="text-orange-500" title="Hidden"><EyeOff className="h-3 w-3" /></span>}
+                              </div>
+                            )}
+                            {user.instagramId && (
+                              <div className="flex items-center gap-2 text-xs">
+                                <FaInstagram className="h-4 w-4 text-pink-500" />
+                                <span>{user.instagramId}</span>
+                                {user.hideInstagram && <span className="text-orange-500" title="Hidden"><EyeOff className="h-3 w-3" /></span>}
+                              </div>
+                            )}
+                            {!user.whatsappNumber && !user.telegramUsername && !user.instagramId && (
+                              <span className="text-xs text-muted-foreground">No contact info</span>
+                            )}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="gap-1">
-                            <Users className="h-3 w-3" />
-                            {user.followersCount}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="gap-1">
-                            <UserCheck className="h-3 w-3" />
-                            {user.followingCount}
-                          </Badge>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1 justify-center">
+                            <Badge variant="secondary" className="gap-1 text-xs">
+                              <MessageCircle className="h-3 w-3" />
+                              {user.postsCount}
+                            </Badge>
+                            <Badge variant="outline" className="gap-1 text-xs">
+                              <Users className="h-3 w-3" />
+                              {user.followersCount}
+                            </Badge>
+                            <Badge variant="outline" className="gap-1 text-xs">
+                              <UserCheck className="h-3 w-3" />
+                              {user.followingCount}
+                            </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="text-center">
                           {user.isVerified ? (

@@ -105,12 +105,12 @@ export function AuthDialog({ open, onOpenChange, restrictToEmail, onSuccess }: A
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md z-[80]">
         <DialogHeader>
-          <DialogTitle>{isLogin ? 'Admin Login' : 'Create Admin Account'}</DialogTitle>
+          <DialogTitle>{isLogin ? 'Login' : 'Create Account'}</DialogTitle>
           {restrictToEmail && (
             <p className="text-sm text-muted-foreground mt-2">
               {isLogin 
-                ? 'Login with your admin credentials. If account doesn\'t exist, click Sign up below.' 
-                : 'Create your admin account to access the system during maintenance.'}
+                ? 'Login with your credentials. If account doesn\'t exist, click Sign up below.' 
+                : 'Create your account to access the system.'}
             </p>
           )}
         </DialogHeader>
