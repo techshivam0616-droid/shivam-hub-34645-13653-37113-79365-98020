@@ -95,9 +95,9 @@ export function SectionCard({ icon: Icon, title, description, path, index, exter
           <CardContent className="relative z-10">
             <Button 
               onClick={handleGetStarted} 
-              className="w-full bg-gradient-to-r from-primary via-accent to-secondary hover:shadow-neon transition-all duration-300 text-white font-bold py-6 text-lg group-hover:scale-105 relative overflow-hidden"
+              className="w-full bg-gradient-to-r from-primary via-accent to-secondary hover:shadow-neon transition-all duration-300 text-primary-foreground font-bold py-6 text-lg group-hover:scale-105 relative overflow-hidden border-0"
             >
-              <span className="relative z-10">Get Started</span>
+              <span className="relative z-10 text-primary-foreground drop-shadow-md">Get Started</span>
               <motion.div 
                 className="absolute inset-0 bg-gradient-to-r from-secondary via-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 animate={{ 

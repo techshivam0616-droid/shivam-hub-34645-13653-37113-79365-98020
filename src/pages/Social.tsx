@@ -7,9 +7,10 @@ import { UserProfilesBox } from '@/components/Social/UserProfilesBox';
 import { ProfileEditor } from '@/components/Social/ProfileEditor';
 import { ReelFeed } from '@/components/Social/ReelFeed';
 import { SocialChat } from '@/components/Social/SocialChat';
+import { UserSearch } from '@/components/Social/UserSearch';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Home, User, Compass, MessageSquare, Play } from 'lucide-react';
+import { ArrowLeft, Home, User, Compass, MessageSquare, Play, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Social() {
@@ -58,7 +59,7 @@ export default function Social() {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="w-full grid grid-cols-4 bg-muted/50">
+              <TabsList className="w-full grid grid-cols-5 bg-muted/50">
                 <TabsTrigger value="reels" className="gap-2">
                   <Play className="h-4 w-4" />
                   <span className="hidden sm:inline">Reels</span>
@@ -66,6 +67,10 @@ export default function Social() {
                 <TabsTrigger value="feed" className="gap-2">
                   <Home className="h-4 w-4" />
                   <span className="hidden sm:inline">Feed</span>
+                </TabsTrigger>
+                <TabsTrigger value="search" className="gap-2">
+                  <Search className="h-4 w-4" />
+                  <span className="hidden sm:inline">Search</span>
                 </TabsTrigger>
                 <TabsTrigger value="explore" className="gap-2">
                   <Compass className="h-4 w-4" />
@@ -83,6 +88,10 @@ export default function Social() {
 
               <TabsContent value="feed" className="space-y-4">
                 <SocialFeed />
+              </TabsContent>
+
+              <TabsContent value="search" className="space-y-4">
+                <UserSearch />
               </TabsContent>
 
               <TabsContent value="explore" className="space-y-4">
