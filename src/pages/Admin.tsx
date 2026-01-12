@@ -25,6 +25,7 @@ import { AdminCoupons } from '@/components/Admin/AdminCoupons';
 import { AdminMyApps } from '@/components/Admin/AdminMyApps';
 import AdminPushNotifications from '@/components/Admin/AdminPushNotifications';
 import { AdminAvatars } from '@/components/Admin/AdminAvatars';
+import AdminKeyGeneration from '@/components/Admin/AdminKeyGeneration';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
@@ -72,6 +73,7 @@ const Admin = () => {
             <TabsTrigger value="shayaris" className="whitespace-nowrap text-sm">Shayaris</TabsTrigger>
             <TabsTrigger value="push-notifications" className="whitespace-nowrap text-sm">Push Notifications</TabsTrigger>
             <TabsTrigger value="avatars" className="whitespace-nowrap text-sm">Avatars</TabsTrigger>
+            <TabsTrigger value="key-generation" className="whitespace-nowrap text-sm">Generate Keys</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload">
@@ -164,6 +166,10 @@ const Admin = () => {
 
           <TabsContent value="avatars">
             <AdminAvatars />
+          </TabsContent>
+
+          <TabsContent value="key-generation">
+            <AdminKeyGeneration />
           </TabsContent>
         </Tabs>
 

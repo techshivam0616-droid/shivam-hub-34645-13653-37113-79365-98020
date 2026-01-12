@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle2, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface KeyGenerationDialogProps {
@@ -46,6 +46,45 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
     }
   }, [open]);
 
+  // Check if the input is an admin bypass key
+  const checkAdminBypassKey = async (code: string): Promise<boolean> => {
+    try {
+      const keysRef = collection(db, 'adminGeneratedKeys');
+      const q = query(keysRef, where('code', '==', code), where('isActive', '==', true));
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        return false;
+      }
+
+      const keyDoc = snapshot.docs[0];
+      const keyData = keyDoc.data();
+      
+      // Check if key has remaining uses
+      if (keyData.usedCount >= keyData.maxUses) {
+        toast.error('This bypass key has expired (max uses reached)');
+        return false;
+      }
+
+      // Increment the used count
+      await updateDoc(doc(db, 'adminGeneratedKeys', keyDoc.id), {
+        usedCount: increment(1)
+      });
+
+      // Set download key expiry
+      const expiryTime = Date.now() + KEY_EXPIRY_TIME;
+      localStorage.setItem('downloadKeyExpiry', expiryTime.toString());
+      
+      const remainingUses = keyData.maxUses - keyData.usedCount - 1;
+      toast.success(`✅ Bypass key used! Download key activated for 2 hours. (${remainingUses} uses remaining)`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking bypass key:', error);
+      return false;
+    }
+  };
+
   const verifyCodeWithValue = async (codeValue: string) => {
     if (!user || !codeValue.trim()) {
       return;
@@ -53,6 +92,19 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
 
     setLoading(true);
     try {
+      // First check if it's an admin bypass key (format: XXXX-XXXX-XXXX)
+      if (codeValue.includes('-')) {
+        const isBypassKey = await checkAdminBypassKey(codeValue);
+        if (isBypassKey) {
+          setTimeout(() => {
+            onKeyGenerated();
+            onOpenChange(false);
+          }, 1000);
+          return;
+        }
+      }
+
+      // Otherwise, check regular verification code
       const codeDoc = await getDoc(doc(db, 'verification_codes', user.uid));
       
       if (!codeDoc.exists()) {
@@ -111,7 +163,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const generateVerificationCode = () => {
     return Math.floor(1000000000 + Math.random() * 9000000000).toString();
@@ -207,20 +259,23 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
             {/* Code Input Field - Always Visible */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Enter 10-Digit Verification Code
+                Enter Verification Code or Bypass Key
               </label>
               <Input
                 type="text"
-                placeholder="Code will auto-fill after verification..."
+                placeholder="10-digit code or admin bypass key..."
                 value={inputCode}
-                onChange={(e) => setInputCode(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                maxLength={10}
+                onChange={(e) => setInputCode(e.target.value.slice(0, 14))}
+                maxLength={14}
                 className="text-center text-lg tracking-widest font-mono"
                 disabled={loading}
               />
+              <p className="text-xs text-muted-foreground">
+                Admin bypass keys look like: XXXX-XXXX-XXXX
+              </p>
             </div>
 
-            {inputCode.length === 10 && (
+            {(inputCode.length === 10 || inputCode.includes('-')) && inputCode.length >= 10 && (
               <Button 
                 onClick={verifyCode}
                 size="lg"
