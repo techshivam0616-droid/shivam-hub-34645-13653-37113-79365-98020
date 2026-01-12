@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Key, Trash2, Copy, Plus, Users, CheckCircle, XCircle } from "lucide-react";
+import { Key, Trash2, Copy, Plus, Users, CheckCircle, XCircle, Calendar, Clock } from "lucide-react";
 
 interface GeneratedKey {
   id: string;
@@ -15,6 +15,7 @@ interface GeneratedKey {
   maxUses: number;
   usedCount: number;
   createdAt: any;
+  expiryDate: any;
   isActive: boolean;
 }
 
@@ -22,6 +23,7 @@ const AdminKeyGeneration = () => {
   const [keys, setKeys] = useState<GeneratedKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [maxUses, setMaxUses] = useState<number>(10);
+  const [expiryHours, setExpiryHours] = useState<number>(24);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -61,15 +63,22 @@ const AdminKeyGeneration = () => {
       return;
     }
 
+    if (expiryHours < 1) {
+      toast.error("Expiry time must be at least 1 hour");
+      return;
+    }
+
     setGenerating(true);
     try {
       const code = generateRandomCode();
+      const expiryDate = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
       
       await addDoc(collection(db, "adminGeneratedKeys"), {
         code,
         maxUses,
         usedCount: 0,
         createdAt: new Date(),
+        expiryDate,
         isActive: true
       });
 
@@ -112,6 +121,30 @@ const AdminKeyGeneration = () => {
     toast.success("Code copied to clipboard!");
   };
 
+  const formatTimeRemaining = (expiryDate: any) => {
+    if (!expiryDate) return "No expiry";
+    const expiry = expiryDate.toDate ? expiryDate.toDate() : new Date(expiryDate);
+    const now = new Date();
+    const diff = expiry.getTime() - now.getTime();
+    
+    if (diff <= 0) return "Expired";
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      return `${days}d ${hours % 24}h`;
+    }
+    return `${hours}h ${minutes}m`;
+  };
+
+  const isExpiredByTime = (expiryDate: any) => {
+    if (!expiryDate) return false;
+    const expiry = expiryDate.toDate ? expiryDate.toDate() : new Date(expiryDate);
+    return expiry.getTime() < Date.now();
+  };
+
   if (loading) {
     return <div className="flex justify-center p-8">Loading...</div>;
   }
@@ -126,8 +159,8 @@ const AdminKeyGeneration = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1 space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="maxUses">Maximum Uses</Label>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -140,15 +173,29 @@ const AdminKeyGeneration = () => {
                   placeholder="Enter max uses"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Users can use this key to bypass shortener. Key becomes invalid after {maxUses} uses.
-              </p>
             </div>
-            <Button onClick={handleGenerateKey} disabled={generating}>
-              <Plus className="h-4 w-4 mr-2" />
-              {generating ? "Generating..." : "Generate Key"}
-            </Button>
+            <div className="space-y-2">
+              <Label htmlFor="expiryHours">Expiry (Hours)</Label>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="expiryHours"
+                  type="number"
+                  min="1"
+                  value={expiryHours}
+                  onChange={(e) => setExpiryHours(parseInt(e.target.value) || 1)}
+                  placeholder="Hours until expiry"
+                />
+              </div>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Key will expire after {maxUses} uses OR after {expiryHours} hours (whichever comes first).
+          </p>
+          <Button onClick={handleGenerateKey} disabled={generating} className="mt-4 w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            {generating ? "Generating..." : "Generate Key"}
+          </Button>
         </CardContent>
       </Card>
 
@@ -168,70 +215,78 @@ const AdminKeyGeneration = () => {
                   <TableRow>
                     <TableHead>Code</TableHead>
                     <TableHead>Uses</TableHead>
+                    <TableHead>Time Left</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {keys.map((key) => {
-                    const isExpired = key.usedCount >= key.maxUses;
+                    const isUsesExpired = key.usedCount >= key.maxUses;
+                    const isTimeExpired = isExpiredByTime(key.expiryDate);
+                    const isExpired = isUsesExpired || isTimeExpired;
+                    
                     return (
                       <TableRow key={key.id} className={isExpired ? "opacity-50" : ""}>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                            <code className="bg-muted px-2 py-1 rounded text-xs font-mono">
                               {key.code}
                             </code>
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-6 w-6"
                               onClick={() => copyToClipboard(key.code)}
                             >
-                              <Copy className="h-4 w-4" />
+                              <Copy className="h-3 w-3" />
                             </Button>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className={isExpired ? "text-destructive" : ""}>
-                            {key.usedCount} / {key.maxUses}
+                          <span className={isUsesExpired ? "text-destructive" : ""}>
+                            {key.usedCount}/{key.maxUses}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={isTimeExpired ? "text-destructive" : "text-green-600"}>
+                            {formatTimeRemaining(key.expiryDate)}
                           </span>
                         </TableCell>
                         <TableCell>
                           {isExpired ? (
-                            <span className="flex items-center gap-1 text-destructive">
-                              <XCircle className="h-4 w-4" /> Expired
+                            <span className="flex items-center gap-1 text-destructive text-xs">
+                              <XCircle className="h-3 w-3" /> Expired
                             </span>
                           ) : key.isActive ? (
-                            <span className="flex items-center gap-1 text-green-600">
-                              <CheckCircle className="h-4 w-4" /> Active
+                            <span className="flex items-center gap-1 text-green-600 text-xs">
+                              <CheckCircle className="h-3 w-3" /> Active
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-muted-foreground">
-                              <XCircle className="h-4 w-4" /> Inactive
+                            <span className="flex items-center gap-1 text-muted-foreground text-xs">
+                              <XCircle className="h-3 w-3" /> Inactive
                             </span>
                           )}
                         </TableCell>
                         <TableCell>
-                          {key.createdAt?.toDate?.()?.toLocaleDateString() || "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             {!isExpired && (
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="h-7 text-xs"
                                 onClick={() => handleToggleActive(key.id, key.isActive)}
                               >
-                                {key.isActive ? "Deactivate" : "Activate"}
+                                {key.isActive ? "Off" : "On"}
                               </Button>
                             )}
                             <Button
                               variant="destructive"
                               size="icon"
+                              className="h-7 w-7"
                               onClick={() => handleDeleteKey(key.id)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
                         </TableCell>

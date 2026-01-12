@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
-import { User, Save, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { User, Save, Sparkles, Eye, EyeOff, Clock, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { maleAvatars, femaleAvatars, getAvatarById } from './avatars';
@@ -44,12 +44,39 @@ export function ProfileEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'male' | 'female'>('male');
+  const [keyTimeRemaining, setKeyTimeRemaining] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
     }
   }, [user]);
+
+  useEffect(() => {
+    const checkKeyExpiry = () => {
+      const expiryStr = localStorage.getItem('downloadKeyExpiry');
+      if (expiryStr) {
+        const expiry = parseInt(expiryStr);
+        const diff = expiry - Date.now();
+        
+        if (diff > 0) {
+          const hours = Math.floor(diff / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+          setKeyTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
+        } else {
+          setKeyTimeRemaining(null);
+          localStorage.removeItem('downloadKeyExpiry');
+        }
+      } else {
+        setKeyTimeRemaining(null);
+      }
+    };
+
+    checkKeyExpiry();
+    const interval = setInterval(checkKeyExpiry, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -150,6 +177,29 @@ export function ProfileEditor() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Download Key Timer */}
+        {keyTimeRemaining && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-green-500/10 border border-green-500/30 rounded-lg p-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Key className="h-5 w-5 text-green-600" />
+                <span className="font-medium text-green-600">Download Key Active</span>
+              </div>
+              <div className="flex items-center gap-2 text-green-600">
+                <Clock className="h-4 w-4" />
+                <span className="font-mono text-lg font-bold">{keyTimeRemaining}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Unlimited downloads available until timer expires
+            </p>
+          </motion.div>
+        )}
+
         {/* Current Avatar */}
         <div className="flex flex-col items-center gap-4">
           <Avatar className="h-24 w-24 ring-4 ring-primary">

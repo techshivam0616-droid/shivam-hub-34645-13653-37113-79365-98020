@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, CheckCircle2, KeyRound } from 'lucide-react';
+import { Loader2, CheckCircle2, KeyRound, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
@@ -15,6 +15,11 @@ interface KeyGenerationDialogProps {
   destinationUrl: string;
 }
 
+interface BypassSuccessInfo {
+  expiryTime: number;
+  remainingUses: number;
+}
+
 const SHORTENER_API = 'https://vplink.in/api';
 const API_KEY = '84d659adb9b96babaca0a088e1871b56cf074b54';
 const KEY_EXPIRY_TIME = 2 * 60 * 60 * 1000;
@@ -25,6 +30,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
   const [verificationCode, setVerificationCode] = useState('');
   const [inputCode, setInputCode] = useState('');
   const [waitingForCode, setWaitingForCode] = useState(false);
+  const [bypassSuccess, setBypassSuccess] = useState<BypassSuccessInfo | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -32,13 +38,12 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
       setInputCode('');
       setWaitingForCode(false);
       setLoading(false);
+      setBypassSuccess(null);
     } else {
-      // Check if code is in sessionStorage (from verification page)
       const storedCode = sessionStorage.getItem('verificationCode');
       if (storedCode && storedCode.length === 10) {
         setInputCode(storedCode);
         sessionStorage.removeItem('verificationCode');
-        // Auto-verify after a short delay
         setTimeout(() => {
           verifyCodeWithValue(storedCode);
         }, 500);
@@ -46,42 +51,54 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
     }
   }, [open]);
 
-  // Check if the input is an admin bypass key
-  const checkAdminBypassKey = async (code: string): Promise<boolean> => {
+  const formatTimeRemaining = (expiryTime: number) => {
+    const diff = expiryTime - Date.now();
+    if (diff <= 0) return "Expired";
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
+  const checkAdminBypassKey = async (code: string): Promise<BypassSuccessInfo | null> => {
     try {
       const keysRef = collection(db, 'adminGeneratedKeys');
       const q = query(keysRef, where('code', '==', code), where('isActive', '==', true));
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
-        return false;
+        return null;
       }
 
       const keyDoc = snapshot.docs[0];
       const keyData = keyDoc.data();
       
-      // Check if key has remaining uses
       if (keyData.usedCount >= keyData.maxUses) {
         toast.error('This bypass key has expired (max uses reached)');
-        return false;
+        return null;
       }
 
-      // Increment the used count
+      if (keyData.expiryDate) {
+        const expiry = keyData.expiryDate.toDate ? keyData.expiryDate.toDate() : new Date(keyData.expiryDate);
+        if (expiry.getTime() < Date.now()) {
+          toast.error('This bypass key has expired (time limit reached)');
+          return null;
+        }
+      }
+
       await updateDoc(doc(db, 'adminGeneratedKeys', keyDoc.id), {
         usedCount: increment(1)
       });
 
-      // Set download key expiry
       const expiryTime = Date.now() + KEY_EXPIRY_TIME;
       localStorage.setItem('downloadKeyExpiry', expiryTime.toString());
       
       const remainingUses = keyData.maxUses - keyData.usedCount - 1;
-      toast.success(`✅ Bypass key used! Download key activated for 2 hours. (${remainingUses} uses remaining)`);
       
-      return true;
+      return { expiryTime, remainingUses };
     } catch (error) {
       console.error('Error checking bypass key:', error);
-      return false;
+      return null;
     }
   };
 
@@ -92,19 +109,15 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
 
     setLoading(true);
     try {
-      // First check if it's an admin bypass key (format: XXXX-XXXX-XXXX)
       if (codeValue.includes('-')) {
-        const isBypassKey = await checkAdminBypassKey(codeValue);
-        if (isBypassKey) {
-          setTimeout(() => {
-            onKeyGenerated();
-            onOpenChange(false);
-          }, 1000);
+        const bypassInfo = await checkAdminBypassKey(codeValue);
+        if (bypassInfo) {
+          setBypassSuccess(bypassInfo);
+          toast.success(`✅ Bypass key activated!`);
           return;
         }
       }
 
-      // Otherwise, check regular verification code
       const codeDoc = await getDoc(doc(db, 'verification_codes', user.uid));
       
       if (!codeDoc.exists()) {
@@ -139,13 +152,11 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
           onKeyGenerated();
           onOpenChange(false);
           
-          // Redirect to the download input after successful verification
           const returnPath = sessionStorage.getItem('downloadReturnPath');
           if (returnPath && returnPath !== window.location.pathname) {
             window.location.hash = returnPath;
           }
           
-          // Trigger download dialog to open after a short delay
           setTimeout(() => {
             const downloadButton = document.querySelector('[data-download-trigger]') as HTMLButtonElement;
             if (downloadButton) {
@@ -177,14 +188,11 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
 
     setLoading(true);
     try {
-      // Store current path for return navigation
       sessionStorage.setItem('downloadReturnPath', window.location.pathname);
 
-      // Generate unique 10-digit verification code
       const code = generateVerificationCode();
       setVerificationCode(code);
 
-      // Store code in Firestore
       await setDoc(doc(db, 'verification_codes', user.uid), {
         code: code,
         userId: user.uid,
@@ -192,11 +200,9 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
         used: false
       });
 
-      // Create verification success URL with user ID (hash route to avoid server 404)
       const verificationUrl = `${window.location.origin}/#/verification-success?userId=${user.uid}`;
       const alias = `vfy_${Date.now()}`;
 
-      // Generate short link
       const apiUrl = `${SHORTENER_API}?api=${API_KEY}&url=${encodeURIComponent(verificationUrl)}&alias=${alias}`;
 
       const response = await fetch(apiUrl);
@@ -222,110 +228,113 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
     await verifyCodeWithValue(inputCode);
   };
 
+  const handleContinue = () => {
+    onKeyGenerated();
+    onOpenChange(false);
+  };
+
+  if (bypassSuccess) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[90vw] sm:max-w-sm p-4 border-2 border-green-500">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-lg text-green-600 flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5" />
+              Key Activated!
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-green-600 mb-2">
+                <Clock className="h-5 w-5" />
+                <span className="text-xl font-bold">{formatTimeRemaining(bypassSuccess.expiryTime)}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">Download access time remaining</p>
+            </div>
+            
+            <div className="text-center space-y-1">
+              <p className="text-sm text-muted-foreground">
+                Bypass key uses remaining: <span className="font-bold text-foreground">{bypassSuccess.remainingUses}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Unlimited downloads for 2 hours!
+              </p>
+            </div>
+            
+            <Button onClick={handleContinue} className="w-full">
+              ✅ Continue to Download
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg border-2 border-primary">
-        <DialogHeader>
-          <DialogTitle className="text-2xl text-primary flex items-center gap-2">
-            🔑 Download Key Generation
+      <DialogContent className="max-w-[90vw] sm:max-w-sm p-4 border-2 border-primary">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg text-primary flex items-center gap-2">
+            🔑 Key Generation
           </DialogTitle>
-          <DialogDescription className="text-base text-muted-foreground">
-            Get instant access to download
+          <DialogDescription className="text-sm">
+            Get instant download access
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex flex-col items-center justify-center py-6 space-y-6">
-          <div className="space-y-4 w-full">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="text-foreground font-medium mb-2">
-                  एक बार Key Generate करने के बाद:
-                </p>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>✓ 2 घंटे तक Free Download कर सकते हैं</li>
-                  <li>✓ कोई Additional Verification नहीं</li>
-                  <li>✓ Unlimited Downloads (2 hours में)</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded p-3">
-              <p className="text-sm text-yellow-600 dark:text-yellow-500">
-                ⚠️ ध्यान दें: Verification पूरा करने के बाद आपको Code यहाँ automatically fill हो जाएगा
-              </p>
-            </div>
-
-            {/* Code Input Field - Always Visible */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Enter Verification Code or Bypass Key
-              </label>
-              <Input
-                type="text"
-                placeholder="10-digit code or admin bypass key..."
-                value={inputCode}
-                onChange={(e) => setInputCode(e.target.value.slice(0, 14))}
-                maxLength={14}
-                className="text-center text-lg tracking-widest font-mono"
-                disabled={loading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Admin bypass keys look like: XXXX-XXXX-XXXX
-              </p>
-            </div>
-
-            {(inputCode.length === 10 || inputCode.includes('-')) && inputCode.length >= 10 && (
-              <Button 
-                onClick={verifyCode}
-                size="lg"
-                disabled={loading}
-                className="w-full font-semibold"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    ✅ Verify Code
-                  </>
-                )}
-              </Button>
-            )}
-            
-            <Button 
-              onClick={generateShortLink}
-              size="lg"
-              disabled={loading}
-              className="w-full font-semibold"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  🔑 Generate Key
-                </>
-              )}
-            </Button>
-
-            <Button 
-              onClick={() => {
-                onOpenChange(false);
-                window.location.href = '/#/buy-bluetick';
-              }}
-              variant="outline"
-              size="lg"
-              className="w-full font-semibold"
-              disabled={loading}
-            >
-              💎 Don't need to generate key - Buy Blue Tick
-            </Button>
+        <div className="space-y-3 py-2">
+          <div className="bg-primary/5 border border-primary/20 rounded p-3">
+            <p className="text-xs text-muted-foreground">
+              ✓ 2 घंटे Free Downloads • ✓ No Extra Verification
+            </p>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Enter Code or Bypass Key</label>
+            <Input
+              type="text"
+              placeholder="Code or XXXX-XXXX-XXXX"
+              value={inputCode}
+              onChange={(e) => setInputCode(e.target.value.slice(0, 14))}
+              maxLength={14}
+              className="text-center text-sm tracking-wider font-mono h-9"
+              disabled={loading}
+            />
+          </div>
+
+          {(inputCode.length === 10 || inputCode.includes('-')) && inputCode.length >= 10 && (
+            <Button 
+              onClick={verifyCode}
+              size="sm"
+              disabled={loading}
+              className="w-full h-9"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "✅ Verify"}
+            </Button>
+          )}
+          
+          <Button 
+            onClick={generateShortLink}
+            size="sm"
+            disabled={loading}
+            className="w-full h-9"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "🔑 Generate Key"}
+          </Button>
+
+          <Button 
+            onClick={() => {
+              onOpenChange(false);
+              window.location.href = '/#/buy-bluetick';
+            }}
+            variant="outline"
+            size="sm"
+            className="w-full h-9 text-xs"
+            disabled={loading}
+          >
+            💎 Buy Blue Tick - Skip Key Gen
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
