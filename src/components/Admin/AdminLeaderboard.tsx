@@ -173,7 +173,7 @@ export function AdminLeaderboard() {
       const currentWeek = getWeekKey();
       const badges = ['🥇 Weekly Champion', '🥈 Weekly Runner-up', '🥉 Weekly Third'];
 
-      // Award badges and save to weekly_winners
+      // Award badges, blue tick, and save to weekly_winners
       for (let i = 0; i < top3.length; i++) {
         const user = top3[i];
         
@@ -190,6 +190,18 @@ export function AdminLeaderboard() {
 
         // Award badge to user
         await awardBadgeToUser(user.id, badges[i], user.displayName);
+        
+        // Grant temporary blue tick for 1 week
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 7);
+        
+        await setDoc(doc(db, 'verified_users', user.email), {
+          email: user.email,
+          verified: true,
+          verifiedAt: new Date().toISOString(),
+          expiresAt: expiryDate.toISOString(),
+          reason: `Weekly ${i === 0 ? 'Champion' : i === 1 ? 'Runner-up' : 'Third Place'} Award`
+        });
       }
 
       // Update leaderboard meta with new week
