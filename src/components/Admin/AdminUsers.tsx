@@ -34,47 +34,94 @@ export function AdminUsers() {
 
   useEffect(() => {
     fetchUsers();
+    // Also set up real-time refresh every 30 seconds
+    const interval = setInterval(fetchUsers, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchUsers = async () => {
     try {
-      const downloadsSnapshot = await getDocs(collection(db, 'downloads'));
+      // Fetch all data sources in parallel for better performance
+      const [downloadsSnapshot, messagesSnapshot, shayarisSnapshot, profilesSnapshot, chatPresenceSnapshot] = await Promise.all([
+        getDocs(collection(db, 'downloads')),
+        getDocs(collection(db, 'messages')),
+        getDocs(collection(db, 'shayaris')),
+        getDocs(collection(db, 'user_profiles')),
+        getDocs(collection(db, 'chat_presence'))
+      ]);
+      
+      // Build profile lookup for display names
+      const profileMap = new Map();
+      profilesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.userId) {
+          profileMap.set(data.userId, data);
+        }
+      });
+      
       const userMap = new Map();
       
       downloadsSnapshot.docs.forEach(doc => {
         const data = doc.data();
         if (data.userId && !userMap.has(data.userId)) {
+          const profile = profileMap.get(data.userId);
           userMap.set(data.userId, {
             id: data.userId,
             email: data.userEmail,
-            displayName: data.userEmail?.split('@')[0] || 'User'
+            displayName: profile?.displayName || data.userName || data.userEmail?.split('@')[0] || 'User',
+            lastActivity: data.downloadedAt
           });
         }
       });
 
       // Also check messages for users
-      const messagesSnapshot = await getDocs(collection(db, 'messages'));
       messagesSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.userId && !userMap.has(data.userId)) {
-          userMap.set(data.userId, {
-            id: data.userId,
-            email: data.userEmail,
-            displayName: data.userName || 'User'
-          });
+        if (data.userId) {
+          const profile = profileMap.get(data.userId);
+          if (!userMap.has(data.userId)) {
+            userMap.set(data.userId, {
+              id: data.userId,
+              email: data.userEmail,
+              displayName: profile?.displayName || data.userName || 'User',
+              lastActivity: data.timestamp
+            });
+          } else {
+            // Update last activity if newer
+            const existing = userMap.get(data.userId);
+            if (data.timestamp && (!existing.lastActivity || data.timestamp > existing.lastActivity)) {
+              existing.lastActivity = data.timestamp;
+            }
+          }
         }
       });
 
       // Also check shayaris
-      const shayarisSnapshot = await getDocs(collection(db, 'shayaris'));
       shayarisSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.userId && !userMap.has(data.userId)) {
-          userMap.set(data.userId, {
-            id: data.userId,
-            email: data.userEmail,
-            displayName: data.userName || 'User'
-          });
+        if (data.userId) {
+          const profile = profileMap.get(data.userId);
+          if (!userMap.has(data.userId)) {
+            userMap.set(data.userId, {
+              id: data.userId,
+              email: data.userEmail,
+              displayName: profile?.displayName || data.userName || 'User',
+              lastActivity: data.createdAt
+            });
+          }
+        }
+      });
+      
+      // Count live users from chat_presence (active in last 5 minutes)
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+      let liveCount = 0;
+      chatPresenceSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.lastSeen) {
+          const lastSeenTime = new Date(data.lastSeen).getTime();
+          if (lastSeenTime > fiveMinutesAgo) {
+            liveCount++;
+          }
         }
       });
 
@@ -108,14 +155,7 @@ export function AdminUsers() {
 
       setUsers(usersWithStats);
       setTotalUsers(usersWithStats.length);
-      
-      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-      const activeUsers = usersWithStats.filter(user => {
-        if (!user.lastActivity) return false;
-        const lastActivityTime = new Date(user.lastActivity).getTime();
-        return lastActivityTime > fiveMinutesAgo;
-      });
-      setLiveUsers(activeUsers.length);
+      setLiveUsers(liveCount);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');

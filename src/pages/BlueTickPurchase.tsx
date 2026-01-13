@@ -7,11 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, increment, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { CheckCircle2, Loader2, CreditCard, Clock, Ticket, X } from 'lucide-react';
+import { CheckCircle2, Loader2, CreditCard, Clock, Ticket, X, Sparkles } from 'lucide-react';
 import blueTick from '@/assets/blue-tick.png';
+
+interface SpecialOffer {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  active: boolean;
+}
 
 const BlueTickPurchase = () => {
   const { user } = useAuth();
@@ -26,6 +34,7 @@ const BlueTickPurchase = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; percentOff: number } | null>(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -34,7 +43,21 @@ const BlueTickPurchase = () => {
     }
     fetchSettings();
     checkPendingRequest();
+    fetchSpecialOffers();
   }, [user]);
+
+  const fetchSpecialOffers = async () => {
+    try {
+      const q = query(collection(db, 'special_offers'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const offers = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as SpecialOffer))
+        .filter(offer => offer.active);
+      setSpecialOffers(offers);
+    } catch (error) {
+      console.error('Error fetching special offers:', error);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -208,6 +231,37 @@ const BlueTickPurchase = () => {
       <Header />
       <div className="container px-4 py-12">
         <div className="max-w-2xl mx-auto">
+          {/* Special Offers Section - Show at top */}
+          {specialOffers.length > 0 && (
+            <div className="mb-8 space-y-4">
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="h-5 w-5" />
+                <h2 className="text-lg font-semibold">Special Offers</h2>
+              </div>
+              <div className="grid gap-4">
+                {specialOffers.map(offer => (
+                  <Card key={offer.id} className="border-2 border-primary/30 bg-gradient-to-r from-primary/5 to-secondary/5 overflow-hidden">
+                    <div className="flex flex-col md:flex-row">
+                      {offer.imageUrl && (
+                        <div className="md:w-1/3">
+                          <img 
+                            src={offer.imageUrl} 
+                            alt={offer.title} 
+                            className="w-full h-32 md:h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className={`p-4 flex-1 ${offer.imageUrl ? '' : 'w-full'}`}>
+                        <h3 className="font-bold text-lg text-primary">{offer.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{offer.description}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="text-center mb-8">
             <img src={blueTick} alt="Blue Tick" className="h-16 w-16 mx-auto mb-4" />
             <h1 className="text-3xl font-bold mb-2">Get Verified</h1>

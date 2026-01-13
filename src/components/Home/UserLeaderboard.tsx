@@ -33,15 +33,31 @@ export function UserLeaderboard() {
         getDocs(collection(db, 'user_badges'))
       ]);
 
-      const verifiedEmails = new Set(
-        verifiedUsersSnapshot.docs
-          .filter(doc => doc.data()?.verified === true)
-          .map(doc => doc.id)
-      );
+      // Build verified users map by email AND check expiry
+      const now = new Date();
+      const verifiedEmails = new Set<string>();
+      verifiedUsersSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data?.verified === true) {
+          // Check if expiry exists and hasn't passed
+          if (data.expiresAt) {
+            const expiryDate = new Date(data.expiresAt);
+            if (expiryDate > now) {
+              verifiedEmails.add(doc.id);
+            }
+          } else {
+            // No expiry means permanent verification
+            verifiedEmails.add(doc.id);
+          }
+        }
+      });
 
+      // Build profile map by both document id AND userId field
       const profileMap = new Map();
+      const profileByDocId = new Map();
       profilesSnapshot.docs.forEach(doc => {
         const data = doc.data();
+        profileByDocId.set(doc.id, data);
         if (data.userId) {
           profileMap.set(data.userId, data);
         }
@@ -65,10 +81,13 @@ export function UserLeaderboard() {
         if (!d.userId) return;
         
         if (!userMap.has(d.userId)) {
-          const profile = profileMap.get(d.userId);
+          // Try to find profile by userId first, then by document id
+          const profile = profileMap.get(d.userId) || profileByDocId.get(d.userId);
+          const displayName = profile?.displayName || d.userName || d.userEmail?.split('@')[0] || 'User';
+          
           userMap.set(d.userId, {
             id: d.userId,
-            displayName: profile?.displayName || d.userName || d.userEmail?.split('@')[0] || 'User',
+            displayName: displayName,
             downloadCount: 0,
             verified: verifiedEmails.has(d.userEmail),
             avatar: profile?.avatar,
