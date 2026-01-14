@@ -3,6 +3,7 @@ import { QuoteCarousel } from '@/components/Home/QuoteCarousel';
 import { SectionCard } from '@/components/Home/SectionCard';
 import { ChannelPopup } from '@/components/Home/ChannelPopup';
 import { HomePopup } from '@/components/Home/HomePopup';
+import { PromotionalBanner } from '@/components/Home/PromotionalBanner';
 
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
@@ -87,12 +88,12 @@ const Index = () => {
           </svg>
         </div>
 
-        {/* Hero Section */}
+        {/* Hero Section - Now with Promotional Banner */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center space-y-6 py-12"
+          className="text-center space-y-8 py-8"
         >
           <motion.h1 
             className="text-5xl md:text-7xl font-bold gradient-text tracking-tight"
@@ -102,14 +103,15 @@ const Index = () => {
           >
             Welcome to the Future
           </motion.h1>
-          <motion.p 
-            className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+          
+          {/* Promotional Banner Slider */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            {settings.siteDescription}
-          </motion.p>
+            <PromotionalBanner />
+          </motion.div>
         </motion.div>
 
 
@@ -131,6 +133,18 @@ const Index = () => {
             />
           ))}
         </div>
+
+        {/* Site Description - Moved to bottom */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="max-w-3xl mx-auto text-center py-8"
+        >
+          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+            {settings.siteDescription}
+          </p>
+        </motion.div>
       </main>
 
       <footer className="border-t border-border/50 mt-20 py-12 bg-card/30 backdrop-blur-lg relative z-10">

@@ -257,12 +257,18 @@ export function AdminLeaderboard() {
           .map(doc => doc.id)
       );
 
-      // Create profile lookup
-      const profileMap = new Map();
+      // Create profile lookup by userId AND by document id
+      const profileByUserId = new Map();
+      const profileByDocId = new Map();
       profilesSnapshot.docs.forEach(doc => {
         const data = doc.data();
+        profileByDocId.set(doc.id, data);
         if (data.userId) {
-          profileMap.set(data.userId, data);
+          profileByUserId.set(data.userId, data);
+        }
+        // Also map by email if available
+        if (data.email) {
+          profileByUserId.set(data.email, data);
         }
       });
 
@@ -275,17 +281,57 @@ export function AdminLeaderboard() {
         }
       });
 
+      // Helper function to get best display name
+      const getDisplayName = (userId: string, email: string, userName: string): string => {
+        // Try profile by userId
+        const profileByUser = profileByUserId.get(userId);
+        if (profileByUser?.displayName) return profileByUser.displayName;
+        
+        // Try profile by docId (userId)
+        const profileByDoc = profileByDocId.get(userId);
+        if (profileByDoc?.displayName) return profileByDoc.displayName;
+        
+        // Try profile by email
+        const profileByEmail = profileByUserId.get(email);
+        if (profileByEmail?.displayName) return profileByEmail.displayName;
+        
+        // Use userName if provided
+        if (userName && userName !== 'User') return userName;
+        
+        // Last resort: extract from email
+        if (email) return email.split('@')[0];
+        
+        return 'User';
+      };
+
+      // Helper function to get avatar
+      const getAvatar = (userId: string, email: string): string | undefined => {
+        const profileByUser = profileByUserId.get(userId);
+        if (profileByUser?.avatar) return profileByUser.avatar;
+        
+        const profileByDoc = profileByDocId.get(userId);
+        if (profileByDoc?.avatar) return profileByDoc.avatar;
+        
+        const profileByEmail = profileByUserId.get(email);
+        if (profileByEmail?.avatar) return profileByEmail.avatar;
+        
+        return undefined;
+      };
+
       // Aggregate user stats
       const userMap = new Map<string, UserStats>();
 
       downloads.forEach((d: any) => {
         if (!d.userId) return;
         if (!userMap.has(d.userId)) {
-          const profile = profileMap.get(d.userId);
+          const displayName = getDisplayName(d.userId, d.userEmail || '', d.userName || '');
+          const avatar = getAvatar(d.userId, d.userEmail || '');
+          const profile = profileByUserId.get(d.userId) || profileByDocId.get(d.userId);
+          
           userMap.set(d.userId, {
             id: d.userId,
             email: d.userEmail || '',
-            displayName: profile?.displayName || d.userName || d.userEmail?.split('@')[0] || 'User',
+            displayName: displayName,
             verified: verifiedEmails.has(d.userEmail),
             downloadCount: 0,
             messageCount: 0,
@@ -297,7 +343,7 @@ export function AdminLeaderboard() {
             downloads: [],
             messages: [],
             shayaris: [],
-            avatar: profile?.avatar
+            avatar: avatar
           });
         }
         const user = userMap.get(d.userId)!;
@@ -311,11 +357,14 @@ export function AdminLeaderboard() {
       messages.forEach((m: any) => {
         if (!m.userId) return;
         if (!userMap.has(m.userId)) {
-          const profile = profileMap.get(m.userId);
+          const displayName = getDisplayName(m.userId, m.userEmail || '', m.userName || '');
+          const avatar = getAvatar(m.userId, m.userEmail || '');
+          const profile = profileByUserId.get(m.userId) || profileByDocId.get(m.userId);
+          
           userMap.set(m.userId, {
             id: m.userId,
             email: m.userEmail || '',
-            displayName: profile?.displayName || m.userName || m.userEmail?.split('@')[0] || 'User',
+            displayName: displayName,
             verified: verifiedEmails.has(m.userEmail),
             downloadCount: 0,
             messageCount: 0,
@@ -327,7 +376,7 @@ export function AdminLeaderboard() {
             downloads: [],
             messages: [],
             shayaris: [],
-            avatar: profile?.avatar
+            avatar: avatar
           });
         }
         const user = userMap.get(m.userId)!;
@@ -341,11 +390,14 @@ export function AdminLeaderboard() {
       shayaris.forEach((s: any) => {
         if (!s.userId) return;
         if (!userMap.has(s.userId)) {
-          const profile = profileMap.get(s.userId);
+          const displayName = getDisplayName(s.userId, s.userEmail || '', s.userName || '');
+          const avatar = getAvatar(s.userId, s.userEmail || '');
+          const profile = profileByUserId.get(s.userId) || profileByDocId.get(s.userId);
+          
           userMap.set(s.userId, {
             id: s.userId,
             email: s.userEmail || '',
-            displayName: profile?.displayName || s.userName || s.userEmail?.split('@')[0] || 'User',
+            displayName: displayName,
             verified: verifiedEmails.has(s.userEmail),
             downloadCount: 0,
             messageCount: 0,
@@ -357,7 +409,7 @@ export function AdminLeaderboard() {
             downloads: [],
             messages: [],
             shayaris: [],
-            avatar: profile?.avatar
+            avatar: avatar
           });
         }
         const user = userMap.get(s.userId)!;
