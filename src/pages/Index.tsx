@@ -4,47 +4,54 @@ import { SectionCard } from '@/components/Home/SectionCard';
 import { ChannelPopup } from '@/components/Home/ChannelPopup';
 import { HomePopup } from '@/components/Home/HomePopup';
 
-import { Package, Film, GraduationCap, Gamepad2, Layers, FolderArchive } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
+
+// Import ultra-realistic icons
+import modsIcon from '@/assets/icons/mods-icon.png';
+import gamesIcon from '@/assets/icons/games-icon.png';
+import assetsIcon from '@/assets/icons/assets-icon.png';
+import bundlesIcon from '@/assets/icons/bundles-icon.png';
+import moviesIcon from '@/assets/icons/movies-icon.png';
+import coursesIcon from '@/assets/icons/courses-icon.png';
 
 const Index = () => {
   const { settings } = useWebsiteSettings();
   
   const sections = [
     {
-      icon: Package,
+      iconImage: modsIcon,
       title: 'Mods',
       description: 'Discover and download the latest game modifications and enhancements',
       path: '/mods',
     },
     {
-      icon: Gamepad2,
+      iconImage: gamesIcon,
       title: 'Games',
       description: 'Explore and download exciting games for all platforms',
       path: '/games',
     },
     {
-      icon: Layers,
+      iconImage: assetsIcon,
       title: 'Assets',
       description: 'Download premium quality assets for your projects',
       path: '/assets',
     },
     {
-      icon: FolderArchive,
+      iconImage: bundlesIcon,
       title: 'Bundles',
       description: 'Get amazing bundle packs with exclusive content',
       path: '/bundles',
     },
     {
-      icon: Film,
+      iconImage: moviesIcon,
       title: 'Movies',
       description: 'Access a vast collection of movies across all genres',
       path: 'https://tech-movies.vercel.app/',
       external: true,
     },
     {
-      icon: GraduationCap,
+      iconImage: coursesIcon,
       title: 'Courses',
       description: 'Learn new skills with our comprehensive course library',
       path: '/courses',

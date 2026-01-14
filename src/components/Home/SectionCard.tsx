@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthDialog } from '@/components/Auth/AuthDialog';
 
 interface SectionCardProps {
-  icon: LucideIcon;
+  iconImage: string;
   title: string;
   description: string;
   path: string;
@@ -16,7 +15,7 @@ interface SectionCardProps {
   external?: boolean;
 }
 
-export function SectionCard({ icon: Icon, title, description, path, index, external }: SectionCardProps) {
+export function SectionCard({ iconImage, title, description, path, index, external }: SectionCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
@@ -49,11 +48,15 @@ export function SectionCard({ icon: Icon, title, description, path, index, exter
         <Card className="h-full group relative overflow-hidden bg-card border-2 border-border hover:border-primary/70 transition-all duration-500">
           <CardHeader className="relative z-10">
             <motion.div 
-              className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary via-accent to-secondary flex items-center justify-center mb-6 relative overflow-hidden"
-              whileHover={{ scale: 1.15, rotate: 10 }}
+              className="h-24 w-24 rounded-2xl overflow-hidden mb-6 relative shadow-lg"
+              whileHover={{ scale: 1.15, rotate: 5 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <Icon className="h-10 w-10 text-white relative z-10 drop-shadow-2xl" />
+              <img 
+                src={iconImage} 
+                alt={title} 
+                className="w-full h-full object-cover"
+              />
             </motion.div>
             <CardTitle className="text-3xl text-foreground font-bold mb-2">{title}</CardTitle>
             <CardDescription className="text-base text-foreground/80 leading-relaxed">
