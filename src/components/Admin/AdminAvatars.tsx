@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Plus, Trash2, Users, Image, Eye, Heart, MessageCircle, UserCheck, EyeOff, Phone } from 'lucide-react';
 import { FaWhatsapp, FaTelegram, FaInstagram } from 'react-icons/fa';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 
 interface CustomAvatar {
   id: string;
@@ -337,7 +337,7 @@ export function AdminAvatars() {
                             <div>
                               <div className="flex items-center gap-1">
                                 <span className="font-medium">{user.displayName}</span>
-                                {user.isVerified && <img src={blueTick} alt="Verified" className="h-4 w-4" />}
+                                {user.isVerified && <KingBadge size="md" />}
                               </div>
                               {user.username && (
                                 <p className="text-xs text-primary">@{user.username}</p>

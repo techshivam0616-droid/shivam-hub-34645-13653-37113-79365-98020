@@ -13,7 +13,7 @@ import { Search, User, UserPlus, UserMinus, Ban, X } from 'lucide-react';
 import { FaWhatsapp, FaTelegram, FaInstagram } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { getAvatarById } from './avatars';
 
 interface UserProfile {
@@ -299,7 +299,7 @@ export function UserSearch() {
                         <div>
                           <div className="flex items-center gap-1">
                             <span className="font-semibold">{userProfile.displayName}</span>
-                            {userProfile.isVerified && <img src={blueTick} alt="Verified" className="h-4 w-4" />}
+                            {userProfile.isVerified && <KingBadge size="md" />}
                           </div>
                           {userProfile.username && (
                             <p className="text-xs text-primary">@{userProfile.username}</p>
@@ -367,7 +367,7 @@ export function UserSearch() {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2">
                     <h3 className="text-xl font-bold">{selectedProfile.displayName}</h3>
-                    {selectedProfile.isVerified && <img src={blueTick} alt="Verified" className="h-5 w-5" />}
+                    {selectedProfile.isVerified && <KingBadge size="lg" />}
                   </div>
                   {selectedProfile.username && (
                     <p className="text-primary">@{selectedProfile.username}</p>

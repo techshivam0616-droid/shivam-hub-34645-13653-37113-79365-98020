@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, Menu, User } from 'lucide-react';
+import { Menu, User, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthDialog } from '@/components/Auth/AuthDialog';
 import { ProfileDrawer } from '@/components/Profile/ProfileDrawer';
 import { NavigationDrawer } from '@/components/Layout/NavigationDrawer';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
 import { useVerification } from '@/hooks/useVerification';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 
 export function Header() {
   const { user } = useAuth();
@@ -16,6 +16,25 @@ export function Header() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showNav, setShowNav] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    // Check if dark mode is enabled on mount
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setIsDark(isDarkMode);
+  }, []);
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   return (
     <>
@@ -37,14 +56,14 @@ export function Header() {
               />
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent flex items-center gap-2">
                 {settings.siteName}
-                {user && isVerified && <img src={blueTick} alt="Verified" className="h-5 w-5 object-contain" />}
+                {user && isVerified && <KingBadge size="lg" />}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             {user ? (
               <Button 

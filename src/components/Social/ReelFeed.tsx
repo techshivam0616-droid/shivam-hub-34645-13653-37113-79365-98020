@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Heart, MessageCircle, Bookmark, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { getAvatarById } from './avatars';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -290,7 +290,7 @@ export function ReelFeed() {
               <div>
                 <div className="flex items-center gap-1">
                   <span className="font-semibold">{currentShayari.userName}</span>
-                  {isVerified && <img src={blueTick} alt="Verified" className="h-4 w-4" />}
+                  {isVerified && <KingBadge size="md" />}
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {new Date(currentShayari.timestamp).toLocaleDateString()}
@@ -414,9 +414,7 @@ export function ReelFeed() {
                 </Avatar>
                 <div className="mt-4 flex items-center gap-2">
                   <h3 className="text-xl font-bold">{selectedProfile.displayName}</h3>
-                  {selectedProfile.isVerified && (
-                    <img src={blueTick} alt="Verified" className="h-5 w-5" />
-                  )}
+                  {selectedProfile.isVerified && <KingBadge size="lg" />}
                 </div>
                 {selectedProfile.bio && (
                   <p className="mt-2 text-sm text-muted-foreground">{selectedProfile.bio}</p>

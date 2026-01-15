@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Trophy, Medal, Award, Download, Crown } from 'lucide-react';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { motion } from 'framer-motion';
 
 interface LeaderboardUser {
@@ -178,9 +178,7 @@ export function UserLeaderboard() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium text-sm truncate">{user.displayName}</span>
-                    {user.verified && (
-                      <img src={blueTick} alt="Verified" className="h-3.5 w-3.5 object-contain flex-shrink-0" />
-                    )}
+                    {user.verified && <KingBadge size="sm" />}
                     {/* Show badges */}
                     {user.badges && user.badges.length > 0 && (
                       <Badge variant="outline" className="text-[10px] h-5 flex items-center gap-1 px-1.5">

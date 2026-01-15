@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVerification } from '@/hooks/useVerification';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { useState } from 'react';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -94,7 +94,7 @@ export function ProfileDrawer({ open, onOpenChange }: ProfileDrawerProps) {
             <div className="flex-1">
               <p className="font-semibold flex items-center gap-2">
                 {user.displayName || 'User'}
-                {isVerified && <img src={blueTick} alt="Verified" className="h-4 w-4 object-contain" />}
+                {isVerified && <KingBadge size="md" />}
                 {isAdmin && <Shield className="h-4 w-4 text-primary" />}
               </p>
               <p className="text-sm text-muted-foreground">{user.email}</p>

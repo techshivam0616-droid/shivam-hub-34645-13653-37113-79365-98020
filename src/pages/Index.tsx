@@ -65,7 +65,7 @@ const Index = () => {
       <ChannelPopup />
       <HomePopup />
       
-      <main className="container px-4 py-12 space-y-16 relative z-10">
+      <main className="container px-4 pt-4 pb-12 space-y-6 relative z-10">
         {/* Floating decorative orbs */}
         <div className="absolute top-20 left-10 w-32 h-32 opacity-20 pointer-events-none float">
           <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/40 to-transparent blur-2xl" />
@@ -85,7 +85,7 @@ const Index = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center space-y-10 py-12"
+          className="text-center space-y-4 pt-2"
         >
           {/* Main Title with glow effect */}
           <div className="relative">

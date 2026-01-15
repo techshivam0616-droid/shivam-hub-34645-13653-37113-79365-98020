@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Users, UserPlus, UserMinus } from 'lucide-react';
 import { toast } from 'sonner';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { getAvatarById } from './avatars';
 import { motion } from 'framer-motion';
 
@@ -164,9 +164,7 @@ export function UserProfilesBox() {
                           <span className="text-sm font-semibold truncate max-w-[100px]">
                             {profile.displayName}
                           </span>
-                          {profile.isVerified && (
-                            <img src={blueTick} alt="Verified" className="h-3.5 w-3.5" />
-                          )}
+                          {profile.isVerified && <KingBadge size="sm" />}
                         </div>
                         <p className="text-xs text-muted-foreground truncate max-w-[120px]">
                           {profile.email}

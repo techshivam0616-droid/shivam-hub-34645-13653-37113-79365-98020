@@ -11,7 +11,7 @@ import { Send, X, User } from 'lucide-react';
 import { FaWhatsapp, FaTelegram, FaInstagram } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { getAvatarById } from './avatars';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -229,7 +229,7 @@ export function SocialChat({ isOpen, onClose }: SocialChatProps) {
                         className="flex items-center gap-1 mb-1 hover:underline cursor-pointer"
                       >
                         <span className="text-xs font-semibold">{message.userName}</span>
-                        {isVerified && <img src={blueTick} alt="Verified" className="h-3 w-3" />}
+                        {isVerified && <KingBadge size="sm" />}
                       </button>
                       <Card className={`px-3 py-2 max-w-[70vw] ${isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                         <p className="text-sm break-words">{message.text}</p>
@@ -293,7 +293,7 @@ export function SocialChat({ isOpen, onClose }: SocialChatProps) {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2">
                     <h3 className="text-xl font-bold">{selectedProfile.displayName}</h3>
-                    {selectedProfile.isVerified && <img src={blueTick} alt="Verified" className="h-5 w-5" />}
+                    {selectedProfile.isVerified && <KingBadge size="lg" />}
                   </div>
                   {selectedProfile.username && (
                     <p className="text-primary">@{selectedProfile.username}</p>

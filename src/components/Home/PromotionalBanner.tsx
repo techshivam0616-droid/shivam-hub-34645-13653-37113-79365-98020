@@ -94,7 +94,7 @@ export function PromotionalBanner() {
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 p-[2px]">
         <div className="relative bg-card rounded-2xl overflow-hidden">
           {/* Banner Content */}
-          <div className="relative h-56 md:h-72 overflow-hidden">
+          <div className="relative h-44 md:h-56 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}

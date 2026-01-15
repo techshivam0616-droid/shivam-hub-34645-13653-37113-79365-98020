@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, X, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { getAvatarById } from './avatars';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -353,9 +353,7 @@ export function SocialFeed() {
                         <div>
                           <div className="flex items-center gap-1">
                             <span className="text-sm font-semibold">{shayari.userName}</span>
-                            {isVerified && (
-                              <img src={blueTick} alt="Verified" className="h-3.5 w-3.5" />
-                            )}
+                            {isVerified && <KingBadge size="sm" />}
                           </div>
                           <span className="text-xs text-muted-foreground">
                             {new Date(shayari.timestamp).toLocaleDateString()}
@@ -471,9 +469,7 @@ export function SocialFeed() {
                 </Avatar>
                 <div className="mt-4 flex items-center gap-2">
                   <h3 className="text-xl font-bold">{selectedProfile.displayName}</h3>
-                  {selectedProfile.isVerified && (
-                    <img src={blueTick} alt="Verified" className="h-5 w-5" />
-                  )}
+                  {selectedProfile.isVerified && <KingBadge size="lg" />}
                 </div>
                 <p className="text-sm text-muted-foreground">{selectedProfile.email}</p>
                 {selectedProfile.bio && (

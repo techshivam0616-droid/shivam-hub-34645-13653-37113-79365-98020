@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { collection, getDocs, query, doc, setDoc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Trophy, Medal, Award, Calendar, Download, MessageCircle, PenSquare, Search, Eye, X, Heart, Users, Bookmark, RotateCcw, Crown, History } from 'lucide-react';
-import blueTick from '@/assets/blue-tick.png';
+import { KingBadge } from '@/components/ui/KingBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -691,9 +691,7 @@ export function AdminLeaderboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold truncate text-foreground">{user.displayName}</p>
-                        {user.verified && (
-                          <img src={blueTick} alt="Verified" className="h-4 w-4 object-contain shrink-0" />
-                        )}
+                        {user.verified && <KingBadge size="md" />}
                         {isTop3 && (
                           <Badge variant={index === 0 ? 'default' : 'secondary'} className="animate-pulse shrink-0">
                             TOP {index + 1}
@@ -767,9 +765,7 @@ export function AdminLeaderboard() {
                     <div>
                       <span className="flex items-center gap-2">
                         {selectedUser.displayName}
-                        {selectedUser.verified && (
-                          <img src={blueTick} alt="Verified" className="h-5 w-5" />
-                        )}
+                        {selectedUser.verified && <KingBadge size="lg" />}
                       </span>
                       <p className="text-sm text-muted-foreground font-normal">{selectedUser.email}</p>
                     </div>
