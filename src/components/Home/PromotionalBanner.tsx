@@ -37,15 +37,21 @@ export function PromotionalBanner() {
   const fetchBanners = async () => {
     try {
       const bannersRef = collection(db, 'promotional_banners');
-      const q = query(bannersRef, where('active', '==', true), orderBy('order', 'asc'));
-      const snapshot = await getDocs(q);
+      // Simplified query to avoid index requirement - filter in memory
+      const snapshot = await getDocs(bannersRef);
       
-      const bannerData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as PromotionalBannerItem[];
+      const bannerData = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as PromotionalBannerItem[];
       
-      setBanners(bannerData);
+      // Filter and sort in memory
+      const activeBanners = bannerData
+        .filter(b => b.active)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      setBanners(activeBanners);
     } catch (error) {
       console.error('Error fetching banners:', error);
     } finally {

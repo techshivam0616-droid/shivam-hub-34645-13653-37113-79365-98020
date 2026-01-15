@@ -22,7 +22,7 @@ interface BypassSuccessInfo {
 
 const SHORTENER_API = 'https://vplink.in/api';
 const API_KEY = '84d659adb9b96babaca0a088e1871b56cf074b54';
-const KEY_EXPIRY_TIME = 2 * 60 * 60 * 1000;
+const KEY_EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
 
 export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destinationUrl }: KeyGenerationDialogProps) {
   const { user } = useAuth();
@@ -146,7 +146,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
         const expiryTime = Date.now() + KEY_EXPIRY_TIME;
         localStorage.setItem('downloadKeyExpiry', expiryTime.toString());
         
-        toast.success('✅ Verification successful! Download key activated for 2 hours.');
+        toast.success('✅ Verification successful! Download key activated for 24 hours.');
         
         setTimeout(() => {
           onKeyGenerated();
@@ -258,7 +258,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
                 Bypass key uses remaining: <span className="font-bold text-foreground">{bypassSuccess.remainingUses}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                Unlimited downloads for 2 hours!
+                Unlimited downloads for 24 hours!
               </p>
             </div>
             
@@ -286,7 +286,7 @@ export function KeyGenerationDialog({ open, onOpenChange, onKeyGenerated, destin
         <div className="space-y-3 py-2">
           <div className="bg-primary/5 border border-primary/20 rounded p-3">
             <p className="text-xs text-muted-foreground">
-              ✓ 2 घंटे Free Downloads • ✓ No Extra Verification
+              ✓ 24 घंटे Free Downloads • ✓ No Extra Verification
             </p>
           </div>
 

@@ -60,55 +60,55 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen relative overflow-hidden">
       <Header />
       <ChannelPopup />
       <HomePopup />
       
       <main className="container px-4 py-12 space-y-16 relative z-10">
-        {/* Cartoon Decorations */}
-        <div className="absolute top-20 left-10 w-24 h-24 opacity-10 pointer-events-none">
-          <svg viewBox="0 0 100 100" className="w-full h-full text-primary animate-bounce">
-            <circle cx="50" cy="50" r="45" fill="currentColor" />
-            <circle cx="35" cy="40" r="10" fill="white" />
-            <circle cx="65" cy="40" r="10" fill="white" />
-            <circle cx="35" cy="40" r="5" fill="black" />
-            <circle cx="65" cy="40" r="5" fill="black" />
-            <path d="M 30 65 Q 50 85 70 65" stroke="white" strokeWidth="5" fill="none" />
-          </svg>
+        {/* Floating decorative orbs */}
+        <div className="absolute top-20 left-10 w-32 h-32 opacity-20 pointer-events-none float">
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/40 to-transparent blur-2xl" />
         </div>
-        <div className="absolute top-40 right-10 w-20 h-20 opacity-10 pointer-events-none">
-          <svg viewBox="0 0 100 100" className="w-full h-full text-secondary animate-pulse">
-            <polygon points="50,5 61,40 98,40 68,62 79,97 50,75 21,97 32,62 2,40 39,40" fill="currentColor" />
-          </svg>
+        <div className="absolute top-60 right-16 w-24 h-24 opacity-15 pointer-events-none float" style={{ animationDelay: '2s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-secondary/50 to-transparent blur-2xl" />
         </div>
-        <div className="absolute bottom-40 left-20 w-16 h-16 opacity-10 pointer-events-none">
-          <svg viewBox="0 0 100 100" className="w-full h-full text-accent animate-spin" style={{ animationDuration: '10s' }}>
-            <rect x="10" y="10" width="80" height="80" rx="15" fill="currentColor" />
-          </svg>
+        <div className="absolute bottom-60 left-24 w-20 h-20 opacity-15 pointer-events-none float" style={{ animationDelay: '4s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-accent/50 to-transparent blur-2xl" />
+        </div>
+        <div className="absolute top-1/2 right-8 w-28 h-28 opacity-10 pointer-events-none float" style={{ animationDelay: '3s' }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/30 via-secondary/20 to-transparent blur-3xl" />
         </div>
 
-        {/* Hero Section - Now with Promotional Banner */}
+        {/* Hero Section with Glassmorphic design */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center space-y-8 py-8"
+          className="text-center space-y-10 py-12"
         >
-          <motion.h1 
-            className="text-5xl md:text-7xl font-bold gradient-text tracking-tight"
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            Welcome to the Future
-          </motion.h1>
+          {/* Main Title with glow effect */}
+          <div className="relative">
+            <motion.h1 
+              className="text-5xl md:text-7xl lg:text-8xl font-bold gradient-text tracking-tight drop-shadow-lg"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              Welcome to the Future
+            </motion.h1>
+            {/* Glow behind title */}
+            <div className="absolute inset-0 text-5xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-primary via-secondary to-accent blur-3xl opacity-30 -z-10">
+              Welcome to the Future
+            </div>
+          </div>
           
           {/* Promotional Banner Slider */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
+            className="relative"
           >
             <PromotionalBanner />
           </motion.div>
@@ -123,8 +123,13 @@ const Index = () => {
           <QuoteCarousel />
         </motion.div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        {/* Cards Grid with enhanced spacing */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
+        >
           {sections.map((section, index) => (
             <SectionCard
               key={section.title}
@@ -132,40 +137,42 @@ const Index = () => {
               index={index}
             />
           ))}
-        </div>
+        </motion.div>
 
-        {/* Site Description - Moved to bottom */}
+        {/* Site Description - Glassmorphic box at bottom */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="max-w-3xl mx-auto text-center py-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="max-w-3xl mx-auto"
         >
-          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-            {settings.siteDescription}
-          </p>
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+              {settings.siteDescription}
+            </p>
+          </div>
         </motion.div>
       </main>
 
-      <footer className="border-t border-border/50 mt-20 py-12 bg-card/30 backdrop-blur-lg relative z-10">
+      <footer className="border-t border-border/30 mt-20 py-12 glass-effect relative z-10">
         <div className="container px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-lg font-bold text-foreground mb-4 gradient-text">About Us</h3>
+              <h3 className="text-lg font-bold mb-4 gradient-text">About Us</h3>
               <p className="text-sm text-muted-foreground">
                 {settings.aboutUs}
               </p>
             </div>
             
             <div>
-              <h3 className="text-lg font-bold text-foreground mb-4 gradient-text">What We Offer</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h3 className="text-lg font-bold mb-4 gradient-text">What We Offer</h3>
+              <ul className="space-y-3 text-sm text-muted-foreground">
                 {settings.whatWeOffer.split('|').map((item, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      index % 3 === 0 ? 'bg-primary' : 
-                      index % 3 === 1 ? 'bg-secondary' : 
-                      'bg-accent'
+                  <li key={index} className="flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full ${
+                      index % 3 === 0 ? 'bg-primary shadow-lg shadow-primary/50' : 
+                      index % 3 === 1 ? 'bg-secondary shadow-lg shadow-secondary/50' : 
+                      'bg-accent shadow-lg shadow-accent/50'
                     } animate-pulse`}></span>
                     {item}
                   </li>
@@ -174,12 +181,12 @@ const Index = () => {
             </div>
             
             <div>
-              <h3 className="text-lg font-bold text-foreground mb-4 gradient-text">Connect With Us</h3>
+              <h3 className="text-lg font-bold mb-4 gradient-text">Connect With Us</h3>
               <a 
                 href={settings.channelLink} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary-glow transition-all duration-300 hover:scale-105 neon-border px-4 py-2 rounded-lg"
+                className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary-glow transition-all duration-300 hover:scale-105 glass-card px-5 py-3 rounded-xl neon-border"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -189,9 +196,9 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="border-t border-border/50 pt-6 text-center">
+          <div className="border-t border-border/30 pt-6 text-center">
             <p className="text-sm text-muted-foreground font-semibold">
-              Developer: <span className="gradient-text font-bold">SHIVAM KUMAR</span>
+              Developer: <span className="gradient-text font-bold text-base">SHIVAM KUMAR</span>
             </p>
           </div>
         </div>
