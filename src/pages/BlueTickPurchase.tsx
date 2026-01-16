@@ -10,8 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, increment, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { CheckCircle2, Loader2, CreditCard, Clock, Ticket, X, Sparkles } from 'lucide-react';
-import blueTick from '@/assets/blue-tick.png';
+import { CheckCircle2, Loader2, CreditCard, Clock, Ticket, X, Sparkles, Crown } from 'lucide-react';
 
 interface SpecialOffer {
   id: string;
@@ -212,7 +211,7 @@ const BlueTickPurchase = () => {
               <Clock className="h-12 w-12 mx-auto text-yellow-500 mb-4" />
               <CardTitle>Request Pending</CardTitle>
               <CardDescription>
-                Your blue tick purchase request is awaiting admin approval. You'll be notified once it's processed.
+                Your King Badge purchase request is awaiting admin approval. You'll be notified once it's processed.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -263,8 +262,10 @@ const BlueTickPurchase = () => {
           )}
 
           <div className="text-center mb-8">
-            <img src={blueTick} alt="Blue Tick" className="h-16 w-16 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold mb-2">Get Verified</h1>
+            <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg">
+              <Crown className="h-8 w-8 text-white" fill="white" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">Get King Badge</h1>
             <p className="text-muted-foreground">
               Join our verified members and enjoy premium benefits
             </p>
@@ -304,13 +305,13 @@ const BlueTickPurchase = () => {
                   </div>
                 </RadioGroup>
 
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
                   <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-blue-500" />
-                    Benefits of Verification
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                    Benefits of King Badge
                   </h3>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>✓ Blue tick badge on your profile</li>
+                    <li>✓ King badge on your profile</li>
                     <li>✓ No key generation required for downloads</li>
                     <li>✓ Access to premium content</li>
                     <li>✓ Priority support</li>

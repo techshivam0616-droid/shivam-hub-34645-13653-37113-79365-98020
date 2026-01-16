@@ -89,8 +89,8 @@ export function AdminBlueTickRequests() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Blue Tick Purchase Requests</CardTitle>
-          <CardDescription>Approve or reject verification purchase requests</CardDescription>
+          <CardTitle>King Badge Purchase Requests</CardTitle>
+          <CardDescription>Approve or reject King Badge purchase requests</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (

@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthDialog } from '@/components/Auth/AuthDialog';
+import { Gamepad2, Puzzle, Package, Film, GraduationCap, FolderOpen, ArrowRight, LucideIcon } from 'lucide-react';
 
 interface SectionCardProps {
-  iconImage: string;
+  icon: LucideIcon;
   title: string;
   description: string;
   path: string;
@@ -15,7 +16,7 @@ interface SectionCardProps {
   external?: boolean;
 }
 
-export function SectionCard({ iconImage, title, description, path, index, external }: SectionCardProps) {
+export function SectionCard({ icon: Icon, title, description, path, index, external }: SectionCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
@@ -38,52 +39,38 @@ export function SectionCard({ iconImage, title, description, path, index, extern
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ 
-          delay: index * 0.12,
+          delay: index * 0.1,
           type: "spring",
           stiffness: 120
         }}
-        whileHover={{ y: -8, scale: 1.02 }}
+        whileHover={{ y: -4 }}
         className="h-full"
       >
-        <Card className="h-full group relative overflow-hidden glass-card border-glow">
-          {/* Animated gradient background */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 blur-xl" />
-          </div>
-          
-          {/* Icon glow effect */}
-          <div className="absolute top-6 left-6 w-28 h-28 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
+        <Card className="h-full group relative overflow-hidden border-glow bg-card hover:shadow-lg transition-all duration-300">
           <CardHeader className="relative z-10 pb-4">
+            {/* Icon Container */}
             <motion.div 
-              className="relative h-20 w-20 rounded-2xl overflow-hidden mb-5 shadow-lg ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all duration-300"
-              whileHover={{ scale: 1.1, rotate: 3 }}
+              className="icon-premium h-16 w-16 mb-5"
+              whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent z-10" />
-              <img 
-                src={iconImage} 
-                alt={title} 
-                className="w-full h-full object-cover"
-              />
-              {/* Shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-[-100%] group-hover:translate-x-[100%]" style={{ transitionDuration: '700ms' }} />
+              <Icon className="h-8 w-8 text-foreground" strokeWidth={1.5} />
             </motion.div>
-            <CardTitle className="text-2xl gradient-text font-bold mb-2">{title}</CardTitle>
+            
+            <CardTitle className="text-xl font-semibold text-foreground mb-2">{title}</CardTitle>
             <CardDescription className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
               {description}
             </CardDescription>
           </CardHeader>
+          
           <CardContent className="relative z-10 pt-2">
             <Button 
               onClick={handleGetStarted} 
-              className="w-full bg-gradient-primary hover:opacity-90 transition-all duration-300 text-primary-foreground font-bold py-5 text-base shadow-lg hover:shadow-xl btn-glow rounded-xl"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-5 text-sm transition-all duration-300 rounded-xl group/btn"
             >
-              <span className="relative z-10 flex items-center gap-2">
+              <span className="flex items-center gap-2">
                 Get Started
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </Button>
           </CardContent>
@@ -102,3 +89,13 @@ export function SectionCard({ iconImage, title, description, path, index, extern
     </>
   );
 }
+
+// Export icon mapping for use in Index.tsx
+export const sectionIcons = {
+  Mods: Puzzle,
+  Games: Gamepad2,
+  Assets: FolderOpen,
+  Bundles: Package,
+  Movies: Film,
+  Courses: GraduationCap
+};

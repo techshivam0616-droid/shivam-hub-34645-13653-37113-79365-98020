@@ -1,4 +1,4 @@
-import kingBadge from '@/assets/king-badge.png';
+import { Crown } from 'lucide-react';
 
 interface KingBadgeProps {
   className?: string;
@@ -13,11 +13,10 @@ const sizeClasses = {
 
 export function KingBadge({ className = '', size = 'md' }: KingBadgeProps) {
   return (
-    <img 
-      src={kingBadge} 
-      alt="King Badge" 
-      className={`object-contain ${sizeClasses[size]} ${className}`}
-      title="Verified King"
+    <Crown 
+      className={`king-badge ${sizeClasses[size]} ${className}`}
+      strokeWidth={2.5}
+      fill="currentColor"
     />
   );
 }

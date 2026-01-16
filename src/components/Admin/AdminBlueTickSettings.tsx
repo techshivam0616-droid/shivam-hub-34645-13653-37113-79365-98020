@@ -49,7 +49,7 @@ export function AdminBlueTickSettings() {
         updatedAt: new Date().toISOString()
       });
 
-      toast.success('Blue tick settings saved successfully!');
+      toast.success('King Badge settings saved successfully!');
     } catch (error) {
       toast.error('Failed to save settings');
       console.error(error);
@@ -69,8 +69,8 @@ export function AdminBlueTickSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Blue Tick Purchase Settings</CardTitle>
-        <CardDescription>Configure pricing and payment details for blue tick verification</CardDescription>
+        <CardTitle>King Badge Purchase Settings</CardTitle>
+        <CardDescription>Configure pricing and payment details for King Badge verification</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSave} className="space-y-6">
