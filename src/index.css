@@ -300,13 +300,45 @@
     box-shadow: var(--shadow-glow);
   }
 
-  /* King badge styling */
-  .king-badge {
+  /* Premium King Badge styling */
+  .king-badge-premium {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: hsl(45 100% 50%);
-    filter: drop-shadow(0 0 4px hsl(45 100% 50% / 0.5));
+    background: linear-gradient(145deg, hsl(45 100% 55%), hsl(38 100% 45%), hsl(45 100% 50%));
+    border-radius: 50%;
+    padding: 3px;
+    box-shadow: 
+      0 2px 8px hsl(45 100% 45% / 0.4),
+      0 4px 16px hsl(38 100% 40% / 0.3),
+      inset 0 1px 2px hsl(50 100% 70% / 0.5);
+    position: relative;
+    animation: king-badge-pulse 3s ease-in-out infinite;
+  }
+
+  .king-badge-premium::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, hsl(50 100% 70% / 0.3), transparent, hsl(45 100% 55% / 0.2));
+    z-index: -1;
+    filter: blur(4px);
+  }
+
+  @keyframes king-badge-pulse {
+    0%, 100% {
+      box-shadow: 
+        0 2px 8px hsl(45 100% 45% / 0.4),
+        0 4px 16px hsl(38 100% 40% / 0.3),
+        inset 0 1px 2px hsl(50 100% 70% / 0.5);
+    }
+    50% {
+      box-shadow: 
+        0 2px 12px hsl(45 100% 50% / 0.6),
+        0 6px 24px hsl(38 100% 45% / 0.5),
+        inset 0 1px 3px hsl(50 100% 75% / 0.7);
+    }
   }
 
   /* Scrollbar styling */
