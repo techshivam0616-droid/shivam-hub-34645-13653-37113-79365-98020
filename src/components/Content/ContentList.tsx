@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ContentCard } from './ContentCard';
+import { ContentCardSkeletonGrid } from './ContentCardSkeleton';
 import { Search, Grid, List } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DotLoader } from '@/components/ui/DotLoader';
 
 interface ContentListProps {
   title: string;
@@ -83,9 +83,13 @@ export function ContentList({ title, items, loading, type }: ContentListProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">
-          <DotLoader size="lg" />
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+        <div className={viewMode === 'grid' 
+          ? type === 'mods' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6'
+            : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+          : 'space-y-4'
+        }>
+          <ContentCardSkeletonGrid count={6} viewMode={viewMode} />
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
