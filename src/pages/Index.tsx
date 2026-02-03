@@ -5,6 +5,7 @@ import { ChannelPopup } from '@/components/Home/ChannelPopup';
 import { HomePopup } from '@/components/Home/HomePopup';
 import { PromotionalBanner } from '@/components/Home/PromotionalBanner';
 import { PageTransition } from '@/components/ui/PageTransition';
+import { TechAICard } from '@/components/Home/TechAICard';
 
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '@/hooks/useWebsiteSettings';
@@ -94,6 +95,16 @@ const Index = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <QuoteCarousel />
+        </motion.div>
+
+        {/* Tech AI Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="max-w-5xl mx-auto"
+        >
+          <TechAICard />
         </motion.div>
 
         {/* Cards Grid */}

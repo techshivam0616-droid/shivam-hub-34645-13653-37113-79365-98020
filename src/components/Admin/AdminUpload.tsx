@@ -11,13 +11,17 @@ import { addDoc, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { Upload, Link, Crown } from 'lucide-react';
+import { Upload, Link, Crown, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { uploadToImgBB } from '@/lib/imgbb';
+import { supabase } from '@/integrations/supabase/client';
 
 // Sections that use simplified form (name, image, link, drive link only)
 const SIMPLIFIED_SECTIONS = ['assets', 'bundles', 'courses'];
 
 export function AdminUpload() {
   const [loading, setLoading] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [section, setSection] = useState('mods');
   const [file, setFile] = useState<File | null>(null);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
@@ -35,6 +39,69 @@ export function AdminUpload() {
 
   const isSimplified = SIMPLIFIED_SECTIONS.includes(section);
 
+  const generateDescription = async () => {
+    if (!formData.title.trim()) {
+      toast.error('Please enter a title first');
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const response = await supabase.functions.invoke('ai-chat', {
+        body: {
+          messages: [{ role: 'user', content: `Generate a description for: ${formData.title}` }],
+          type: 'description'
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      // Parse streaming response
+      const text = await new Response(response.data).text();
+      const lines = text.split('\n');
+      let description = '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const json = JSON.parse(line.slice(6));
+            const content = json.choices?.[0]?.delta?.content;
+            if (content) description += content;
+          } catch (e) {
+            // Skip invalid JSON
+          }
+        }
+      }
+
+      if (description) {
+        setFormData(prev => ({ ...prev, description: description.trim() }));
+        toast.success('Description generated!');
+      }
+    } catch (error) {
+      console.error('AI error:', error);
+      toast.error('Failed to generate description');
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const url = await uploadToImgBB(file);
+      setThumbnailUrl(url);
+      toast.success('Image uploaded to ImgBB!');
+    } catch (error) {
+      console.error('ImgBB error:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,11 +118,9 @@ export function AdminUpload() {
           downloadUrl = await getDownloadURL(fileRef);
         }
 
-        // Upload thumbnail
+        // Upload thumbnail to ImgBB if available
         if (thumbnail) {
-          const thumbRef = ref(storage, `thumbnails/${Date.now()}_${thumbnail.name}`);
-          await uploadBytes(thumbRef, thumbnail);
-          thumbUrl = await getDownloadURL(thumbRef);
+          thumbUrl = await uploadToImgBB(thumbnail);
         }
       } else {
         // Use URLs directly
@@ -142,12 +207,30 @@ export function AdminUpload() {
           {!isSimplified && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="description">Description *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={generateDescription}
+                    disabled={generatingDescription || !formData.title.trim()}
+                    className="gap-2"
+                  >
+                    {generatingDescription ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    AI Generate
+                  </Button>
+                </div>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
+                  className="min-h-[100px]"
                 />
               </div>
 
@@ -180,7 +263,7 @@ export function AdminUpload() {
                 />
                 <Label htmlFor="isPremium" className="flex items-center gap-2 cursor-pointer">
                   <Crown className="h-4 w-4 text-yellow-500" />
-                  <span>Mark as Premium (Blue Tick Required)</span>
+                  <span>Mark as Premium (King Badge Required)</span>
                 </Label>
               </div>
             </>
@@ -200,14 +283,31 @@ export function AdminUpload() {
 
             <TabsContent value="url" className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="thumbnailUrl">Image URL</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="thumbnailUrl">Image URL</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="w-auto text-xs"
+                      disabled={uploadingImage}
+                    />
+                    {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </div>
+                </div>
                 <Input
                   id="thumbnailUrl"
                   type="url"
                   value={thumbnailUrl}
                   onChange={(e) => setThumbnailUrl(e.target.value)}
-                  placeholder="https://example.com/thumbnail.jpg"
+                  placeholder="https://example.com/thumbnail.jpg or upload above"
                 />
+                {thumbnailUrl && (
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden border">
+                    <img src={thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -239,7 +339,7 @@ export function AdminUpload() {
 
             <TabsContent value="file" className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="thumbnail">Image</Label>
+                <Label htmlFor="thumbnail">Image (uploads to ImgBB)</Label>
                 <Input
                   id="thumbnail"
                   type="file"

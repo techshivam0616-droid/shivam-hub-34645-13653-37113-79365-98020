@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Package, Film, GraduationCap, Youtube, Send, MessageSquare, Shield, MessageCircle, Gamepad2, Layers, FolderArchive, Crown, Trophy } from 'lucide-react';
+import { Package, Film, GraduationCap, Youtube, Send, MessageSquare, Shield, MessageCircle, Gamepad2, Layers, FolderArchive, Crown, Trophy, Sparkles } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +32,7 @@ export function NavigationDrawer({ open, onOpenChange }: NavigationDrawerProps) 
   };
 
   const menuItems = [
+    { icon: Sparkles, label: 'Tech AI', path: '/tech-ai' },
     { icon: Package, label: 'Mods', path: '/mods' },
     { icon: Gamepad2, label: 'Games', path: '/games' },
     { icon: Layers, label: 'Assets', path: '/assets' },

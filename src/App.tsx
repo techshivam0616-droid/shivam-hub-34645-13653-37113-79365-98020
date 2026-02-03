@@ -29,6 +29,7 @@ import KingBadgePurchase from "./pages/KingBadgePurchase";
 import Social from "./pages/Social";
 import ItemDetails from "./pages/ItemDetails";
 import Leaderboard from "./pages/Leaderboard";
+import TechAI from "./pages/TechAI";
 
 const queryClient = new QueryClient();
 
@@ -60,9 +61,10 @@ const AppContent = () => {
           <Route path="/live-chat" element={<LiveChat />} />
           <Route path="/buy-king-badge" element={<KingBadgePurchase />} />
           <Route path="/social" element={<Social />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/item/:type/:id" element={<ItemDetails />} />
-          <Route path="*" element={<NotFound />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/tech-ai" element={<TechAI />} />
+              <Route path="/item/:type/:id" element={<ItemDetails />} />
+              <Route path="*" element={<NotFound />} />
         </Routes>
       </MaintenanceBlocker>
     </>
