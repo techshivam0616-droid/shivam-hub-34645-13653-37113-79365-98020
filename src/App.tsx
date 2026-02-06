@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import { WinterSnow } from "@/components/Theme/WinterSnow";
 import { FeedbackPopup } from "@/components/Feedback/FeedbackPopup";
 import { NotificationPrompt } from "@/components/Notifications/NotificationPrompt";
 import { useWinterTheme } from "@/hooks/useWinterTheme";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Mods from "./pages/Mods";
 import Courses from "./pages/Courses";
@@ -55,32 +56,34 @@ const AppContent = () => {
         <NoticePopup />
         <FeedbackPopup />
         <NotificationPrompt />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/mods" element={<Mods />} />
-          <Route path="/mod" element={<Mods />} />
-          <Route path="/games" element={<Games />} />
-          <Route path="/assets" element={<Assets />} />
-          <Route path="/bundles" element={<Bundles />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/request-mod" element={<RequestMod />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/download-callback" element={<DownloadCallback />} />
-          <Route path="/verification-success" element={<VerificationSuccess />} />
-          <Route path="/live-chat" element={<LiveChat />} />
-          <Route path="/buy-king-badge" element={<KingBadgePurchase />} />
-          <Route path="/social" element={<Social />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/tech-ai" element={<TechAI />} />
-          <Route path="/item/:type/:id" element={<ItemDetails />} />
-          {/* Legal Pages */}
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          <Route path="/terms-conditions" element={<TermsConditions />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/mods" element={<Mods />} />
+            <Route path="/mod" element={<Mods />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/bundles" element={<Bundles />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/request-mod" element={<RequestMod />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/download-callback" element={<DownloadCallback />} />
+            <Route path="/verification-success" element={<VerificationSuccess />} />
+            <Route path="/live-chat" element={<LiveChat />} />
+            <Route path="/buy-king-badge" element={<KingBadgePurchase />} />
+            <Route path="/social" element={<Social />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/tech-ai" element={<TechAI />} />
+            <Route path="/item/:type/:id" element={<ItemDetails />} />
+            {/* Legal Pages */}
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/terms-conditions" element={<TermsConditions />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </MaintenanceBlocker>
     </>
   );
@@ -109,17 +112,19 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <HashRouter>
-            <AppContent />
-          </HashRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <HashRouter>
+              <AppContent />
+            </HashRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
