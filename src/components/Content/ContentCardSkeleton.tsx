@@ -52,7 +52,7 @@ export function ContentCardSkeletonGrid({ count = 6, viewMode = 'grid' }: { coun
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
-        <ContentCardSkeleton key={index} viewMode={viewMode} />
+        <ContentCardSkeleton key={`skeleton-${index}`} viewMode={viewMode} />
       ))}
     </>
   );

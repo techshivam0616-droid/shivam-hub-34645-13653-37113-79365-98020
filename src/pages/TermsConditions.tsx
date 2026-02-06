@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Header } from '@/components/Layout/Header';
 import { motion } from 'framer-motion';
 import { FileText, Scale, AlertCircle, Ban, RefreshCw, ShieldCheck } from 'lucide-react';

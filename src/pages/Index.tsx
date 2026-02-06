@@ -117,7 +117,11 @@ const Index = () => {
           {sections.map((section, index) => (
             <SectionCard
               key={section.title}
-              {...section}
+              icon={section.icon}
+              title={section.title}
+              description={section.description}
+              path={section.path}
+              external={section.external}
               index={index}
             />
           ))}
